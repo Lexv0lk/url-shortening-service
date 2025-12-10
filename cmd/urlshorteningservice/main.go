@@ -1,0 +1,5 @@
+package urlshorteningservice
+
+func main() {
+
+}
