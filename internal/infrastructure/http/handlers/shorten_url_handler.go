@@ -37,7 +37,7 @@ func (h *ShortenUrlHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urlToken, err := h.urlAdder.AddTokenForUrl(req.URL)
+	urlToken, err := h.urlAdder.AddTokenForUrl(r.Context(), req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

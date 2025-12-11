@@ -38,3 +38,14 @@ func (s *LocalStorage) GetMapping(urlToken string) (domain.MappingInfo, bool) {
 
 	return domain.MappingInfo{}, false
 }
+
+func (s *LocalStorage) GetLastId() (uint64, error) {
+	var lastId uint64
+	for id := range s.storage {
+		if id > lastId {
+			lastId = id
+		}
+	}
+
+	return lastId, nil
+}

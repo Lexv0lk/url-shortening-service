@@ -1,34 +1,18 @@
 package application
 
 import (
+	"context"
 	"fmt"
 	"url-shortening-service/internal/domain"
 )
 
-type MappedGetSetter interface {
-	OriginalUrlGetter
-	UrlTokenGetter
-}
-
-type OriginalUrlGetter interface {
-	GetOriginalUrl(shortUrl string) (string, bool)
-}
-
-type UrlTokenGetter interface {
-	SetMapping(originalUrl, urlToken string) error
-}
-
-type MappingInfoGetter interface {
-	GetMapping(urlToken string) (domain.MappingInfo, bool)
-}
-
 type UrlGetter struct {
-	cache  MappedGetSetter
-	store  MappingInfoGetter
+	cache  domain.MappedGetSetter
+	store  domain.MappingInfoGetter
 	logger domain.Logger
 }
 
-func NewUrlGetter(cache MappedGetSetter, store MappingInfoGetter, logger domain.Logger) *UrlGetter {
+func NewUrlGetter(cache domain.MappedGetSetter, store domain.MappingInfoGetter, logger domain.Logger) *UrlGetter {
 	return &UrlGetter{
 		cache:  cache,
 		store:  store,
@@ -36,8 +20,8 @@ func NewUrlGetter(cache MappedGetSetter, store MappingInfoGetter, logger domain.
 	}
 }
 
-func (u *UrlGetter) GetOriginalUrl(urlToken string) (string, error) {
-	if originalUrl, found := u.cache.GetOriginalUrl(urlToken); found {
+func (u *UrlGetter) GetOriginalUrl(ctx context.Context, urlToken string) (string, error) {
+	if originalUrl, found := u.cache.GetOriginalUrl(ctx, urlToken); found {
 		return originalUrl, nil
 	}
 
@@ -46,7 +30,7 @@ func (u *UrlGetter) GetOriginalUrl(urlToken string) (string, error) {
 		return "", &domain.UrlNonExistingError{Msg: fmt.Sprintf("short URL not found for original URL: %s", urlToken)}
 	}
 
-	err := u.cache.SetMapping(mappingInfo.OriginalURL, urlToken)
+	err := u.cache.SetMapping(ctx, mappingInfo.OriginalURL, urlToken)
 	if err != nil {
 		u.logger.Warn("Failed to cache short URL for original URL")
 	}

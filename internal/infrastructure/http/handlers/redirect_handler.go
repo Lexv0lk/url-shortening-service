@@ -23,7 +23,7 @@ func NewRedirectHandler(urlGetter application.UrlGetter) *RedirectHandler {
 func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	token := r.PathValue(domain.UrlTokenStr)
 
-	originalUrl, err := h.urlGetter.GetOriginalUrl(token)
+	originalUrl, err := h.urlGetter.GetOriginalUrl(r.Context(), token)
 	if err != nil {
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return

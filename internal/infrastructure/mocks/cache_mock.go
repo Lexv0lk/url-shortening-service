@@ -1,5 +1,7 @@
 package mocks
 
+import "context"
+
 type LocalCache struct {
 	storage map[string]string
 }
@@ -10,12 +12,12 @@ func NewLocalCache() *LocalCache {
 	}
 }
 
-func (c *LocalCache) SetMapping(originalUrl, urlToken string) error {
+func (c *LocalCache) SetMapping(ctx context.Context, originalUrl, urlToken string) error {
 	c.storage[urlToken] = originalUrl
 	return nil
 }
 
-func (c *LocalCache) GetOriginalUrl(urlToken string) (string, bool) {
+func (c *LocalCache) GetOriginalUrl(ctx context.Context, urlToken string) (string, bool) {
 	originalUrl, found := c.storage[urlToken]
 	return originalUrl, found
 }
