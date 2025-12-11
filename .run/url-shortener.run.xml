@@ -12,7 +12,7 @@
             </DockerPortBindingImpl>
           </list>
         </option>
-        <option name="commandLineOptions" value="--network url-short-net" />
+        <option name="commandLineOptions" value="--network local-test-net" />
         <option name="sourceFilePath" value="Dockerfile" />
       </settings>
     </deployment>

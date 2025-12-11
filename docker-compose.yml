@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  server:
+    container_name: url-shortener-server
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_URL=redis
+      - REDIS_PORT=6379
+      - SERVER_PORT=8080
+    depends_on:
+      - redis
+    networks:
+      - backend-net
+
+  redis:
+    container_name: redis
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    driver: bridge
