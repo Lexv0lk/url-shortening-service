@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"url-shortening-service/internal/application"
+	"url-shortening-service/internal/domain"
 )
 
 type RedirectHandler struct {
@@ -20,7 +21,7 @@ func NewRedirectHandler(urlGetter application.UrlGetter) *RedirectHandler {
 }
 
 func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
-	token := r.PathValue("token")
+	token := r.PathValue(domain.UrlTokenStr)
 
 	originalUrl, err := h.urlGetter.GetOriginalUrl(token)
 	if err != nil {

@@ -13,16 +13,20 @@ type HandlersServer struct {
 	urlAdder  application.UrlShortener
 	urlGetter application.UrlGetter
 	logger    domain.Logger
+	port      string
 
 	once *sync.Once
 }
 
-func NewSimpleServer(urlAdder application.UrlShortener, urlGetter application.UrlGetter, logger domain.Logger) *HandlersServer {
+func NewSimpleServer(urlAdder application.UrlShortener, urlGetter application.UrlGetter,
+	logger domain.Logger, port string) *HandlersServer {
 	return &HandlersServer{
 		mux:       http.NewServeMux(),
 		urlAdder:  urlAdder,
 		urlGetter: urlGetter,
 		logger:    logger,
+		once:      &sync.Once{},
+		port:      port,
 	}
 }
 
@@ -35,12 +39,10 @@ func (s *HandlersServer) startServer() {
 	addUrlHandler := handlers.NewAddUrlHandler(s.urlAdder, s.logger)
 	redirectHandler := handlers.NewRedirectHandler(s.urlGetter)
 
-	mux.HandleFunc("POST /add-url", addUrlHandler.Create)
-	mux.HandleFunc("GET /{urlToken}", redirectHandler.Redirect)
+	mux.HandleFunc(domain.AddUrlAddress, addUrlHandler.Create)
+	mux.HandleFunc(domain.RedirectAddress, redirectHandler.Redirect)
 
-	go func() {
-		if err := http.ListenAndServe(":8080", mux); err != nil {
-			s.logger.Error("Failed to start HTTP server: " + err.Error())
-		}
-	}()
+	if err := http.ListenAndServe(":"+s.port, mux); err != nil {
+		s.logger.Error("Failed to start HTTP server: " + err.Error())
+	}
 }

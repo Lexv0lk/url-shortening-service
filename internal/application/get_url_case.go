@@ -7,15 +7,15 @@ import (
 
 type MappedGetSetter interface {
 	OriginalUrlGetter
-	ShortUrlSetter
+	UrlTokenGetter
 }
 
 type OriginalUrlGetter interface {
 	GetOriginalUrl(shortUrl string) (string, bool)
 }
 
-type ShortUrlSetter interface {
-	SetMapping(originalUrl, shortUrl string) error
+type UrlTokenGetter interface {
+	SetMapping(originalUrl, urlToken string) error
 }
 
 type MappingInfoGetter interface {

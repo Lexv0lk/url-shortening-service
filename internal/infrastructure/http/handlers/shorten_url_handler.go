@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"url-shortening-service/internal/application"
 	"url-shortening-service/internal/domain"
 )
@@ -36,13 +37,19 @@ func (h *ShortenUrlHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, err := h.urlAdder.ShortenNewUrl(req.URL)
+	urlToken, err := h.urlAdder.AddTokenForUrl(req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	resp := ShortenUrlResponse{ShortURL: shortURL}
+	shortUrl, err := url.JoinPath(domain.BaseUrl, urlToken)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp := ShortenUrlResponse{ShortURL: shortUrl}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
