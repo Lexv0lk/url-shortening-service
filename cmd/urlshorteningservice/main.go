@@ -82,9 +82,13 @@ func main() {
 		logger.Error(fmt.Sprintf("Error while creating Postgres storage: %v", err))
 		return
 	}
+	defer storage.Close()
+
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: redisUrl + ":" + redisPort,
 	})
+	defer redisClient.Close()
+
 	localCache := rediswrap.NewRedisStorage(redisClient, logger)
 	idGenerator, err := rediswrap.NewRedisIdGenerator(context.Background(), redisClient, storage)
 	if err != nil {
