@@ -38,5 +38,5 @@ func (u *UrlShortener) AddTokenForUrl(ctx context.Context, originalUrl string) (
 	}
 
 	urlToken := domain.GenerateToken(id)
-	return urlToken, u.store.AddNewMapping(id, originalUrl, urlToken)
+	return urlToken, u.store.AddNewMapping(ctx, id, originalUrl, urlToken)
 }

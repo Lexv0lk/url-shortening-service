@@ -25,7 +25,7 @@ func (u *UrlGetter) GetOriginalUrl(ctx context.Context, urlToken string) (string
 		return originalUrl, nil
 	}
 
-	mappingInfo, found := u.store.GetMapping(urlToken)
+	mappingInfo, found := u.store.GetMapping(ctx, urlToken)
 	if !found {
 		return "", &domain.UrlNonExistingError{Msg: fmt.Sprintf("short URL not found for original URL: %s", urlToken)}
 	}

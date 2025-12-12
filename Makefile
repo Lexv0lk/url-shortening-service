@@ -1,15 +1,35 @@
 ﻿COVERAGE_FILE ?= coverage.out
 
-TARGET ?= urlshorteningservice # CHANGE THIS TO YOUR BINARY NAME
+.PHONY: build-app-up
+build-app-up:
+	@docker-compose --profile app up -d --build
 
-.PHONY: build
-build:
-	@echo "Processing go build for target ${TARGET}"
-	@mkdir -p .bin
-	@go build -o ./bin/${TARGET} ./cmd/${TARGET}
+.PHONY: app-up
+app-up:
+	@docker-compose --profile app up -d
 
 ## test: run all tests
 .PHONY: test
 test:
 	@go test -coverpkg='url-shortening-service/...' --race -count=1 -coverprofile='$(COVERAGE_FILE)' ./...
 	@go tool cover -func='$(COVERAGE_FILE)' | grep ^total | tr -s '\t'
+
+
+## database
+DB_DSN := "postgres://admin:password@localhost:5432/url_shortener_db?sslmode=disable"
+
+.PHONY: infra-up
+infra-up:
+	@docker-compose --profile infra up -d
+
+.PHONY: migrate-up
+migrate-up:
+	@goose -dir migrations postgres ${DB_DSN} up
+
+.PHONY: migrate-down
+migrate-down:
+	@goose -dir migrations postgres ${DB_DSN} down
+
+.PHONY: migrate-status
+migrate-status:
+	@goose -dir migrations postgres ${DB_DSN} status

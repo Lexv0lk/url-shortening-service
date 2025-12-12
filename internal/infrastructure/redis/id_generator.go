@@ -15,7 +15,7 @@ type RedisIdGenerator struct {
 }
 
 func NewRedisIdGenerator(ctx context.Context, client *redis.Client, lastIdGetter domain.MappingInfoLastIdGetter) (*RedisIdGenerator, error) {
-	lastId, err := lastIdGetter.GetLastId()
+	lastId, err := lastIdGetter.GetLastId(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("getting last mapping id: %w", err)
 	}
@@ -28,11 +28,11 @@ func NewRedisIdGenerator(ctx context.Context, client *redis.Client, lastIdGetter
 	return &RedisIdGenerator{client: client}, nil
 }
 
-func (r *RedisIdGenerator) GetNextId(ctx context.Context) (uint64, error) {
+func (r *RedisIdGenerator) GetNextId(ctx context.Context) (int64, error) {
 	newId, err := r.client.Incr(ctx, counterId).Result()
 	if err != nil {
 		return 0, fmt.Errorf("incrementing mapping count in redis: %w", err)
 	}
 
-	return uint64(newId), nil
+	return newId, nil
 }

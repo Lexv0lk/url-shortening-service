@@ -1,21 +1,22 @@
 package mocks
 
 import (
+	"context"
 	"fmt"
 	"url-shortening-service/internal/domain"
 )
 
 type LocalStorage struct {
-	storage map[uint64]domain.MappingInfo
+	storage map[int64]domain.MappingInfo
 }
 
 func NewLocalStorage() *LocalStorage {
 	return &LocalStorage{
-		storage: make(map[uint64]domain.MappingInfo),
+		storage: make(map[int64]domain.MappingInfo),
 	}
 }
 
-func (s *LocalStorage) AddNewMapping(id uint64, originalUrl string, urlToken string) error {
+func (s *LocalStorage) AddNewMapping(ctx context.Context, id int64, originalUrl string, urlToken string) error {
 	if _, found := s.storage[id]; found {
 		return &domain.UrlExistingError{Msg: fmt.Sprintf("Duplicate mapping id %d", id)}
 	}
@@ -29,7 +30,7 @@ func (s *LocalStorage) AddNewMapping(id uint64, originalUrl string, urlToken str
 	return nil
 }
 
-func (s *LocalStorage) GetMapping(urlToken string) (domain.MappingInfo, bool) {
+func (s *LocalStorage) GetMapping(ctx context.Context, urlToken string) (domain.MappingInfo, bool) {
 	for _, mapping := range s.storage {
 		if mapping.Token == urlToken {
 			return mapping, true
@@ -39,8 +40,8 @@ func (s *LocalStorage) GetMapping(urlToken string) (domain.MappingInfo, bool) {
 	return domain.MappingInfo{}, false
 }
 
-func (s *LocalStorage) GetLastId() (uint64, error) {
-	var lastId uint64
+func (s *LocalStorage) GetLastId(ctx context.Context) (int64, error) {
+	var lastId int64
 	for id := range s.storage {
 		if id > lastId {
 			lastId = id

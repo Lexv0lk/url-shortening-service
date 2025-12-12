@@ -16,17 +16,17 @@ type UrlTokenSetter interface {
 }
 
 type MappingInfoGetter interface {
-	GetMapping(urlToken string) (MappingInfo, bool)
+	GetMapping(ctx context.Context, urlToken string) (MappingInfo, bool)
 }
 
 type MappingInfoLastIdGetter interface {
-	GetLastId() (uint64, error)
+	GetLastId(ctx context.Context) (int64, error)
 }
 
 type MappingInfoAdder interface {
-	AddNewMapping(id uint64, originalUrl string, shortUrl string) error
+	AddNewMapping(ctx context.Context, id int64, originalUrl string, shortUrl string) error
 }
 
 type IdGenerator interface {
-	GetNextId(ctx context.Context) (uint64, error)
+	GetNextId(ctx context.Context) (int64, error)
 }

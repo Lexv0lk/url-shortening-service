@@ -4,11 +4,11 @@ import "strings"
 
 const (
 	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	base     = uint64(len(alphabet))
+	base     = int64(len(alphabet))
 )
 
-// GenerateToken generates a short string token from a given uint64 ID
-func GenerateToken(id uint64) string {
+// GenerateToken generates a short string token from a given int64 ID
+func GenerateToken(id int64) string {
 	if id == 0 {
 		return string(alphabet[0])
 	}

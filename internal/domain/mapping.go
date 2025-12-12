@@ -1,7 +1,7 @@
 package domain
 
 type MappingInfo struct {
-	Id          uint64
+	Id          int64
 	OriginalURL string
 	Token       string
 }
