@@ -50,3 +50,20 @@ func (e *InvalidUrlError) Is(target error) bool {
 }
 
 //endregion
+
+//region TokenNonExistingError
+
+type TokenNonExistingError struct {
+	Msg string
+}
+
+func (e *TokenNonExistingError) Error() string {
+	return e.Msg
+}
+
+func (e *TokenNonExistingError) Is(target error) bool {
+	_, ok := target.(*TokenNonExistingError)
+	return ok
+}
+
+//endregion

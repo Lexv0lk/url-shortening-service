@@ -7,6 +7,11 @@ type MappedGetSetter interface {
 	UrlTokenSetter
 }
 
+type MappingInfoGetAdder interface {
+	MappingInfoGetter
+	MappingInfoAdder
+}
+
 type OriginalUrlGetter interface {
 	GetOriginalUrl(ctx context.Context, shortUrl string) (string, bool)
 }
@@ -16,7 +21,7 @@ type UrlTokenSetter interface {
 }
 
 type MappingInfoGetter interface {
-	GetMapping(ctx context.Context, urlToken string) (MappingInfo, bool)
+	GetMappingByToken(ctx context.Context, urlToken string) (MappingInfo, bool)
 }
 
 type MappingInfoLastIdGetter interface {
@@ -24,7 +29,11 @@ type MappingInfoLastIdGetter interface {
 }
 
 type MappingInfoAdder interface {
-	AddNewMapping(ctx context.Context, id int64, originalUrl string, shortUrl string) error
+	AddNewMapping(ctx context.Context, id int64, originalUrl string, shortUrl string) (MappingInfo, error)
+}
+
+type MappingInfoUpdater interface {
+	UpdateOriginalUrl(ctx context.Context, urlToken string, newOriginalUrl string) (MappingInfo, error)
 }
 
 type IdGenerator interface {

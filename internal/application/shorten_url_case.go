@@ -2,15 +2,8 @@ package application
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 	"url-shortening-service/internal/domain"
 )
-
-var validSchemes = map[string]bool{
-	"http":  true,
-	"https": true,
-}
 
 type UrlShortener struct {
 	store       domain.MappingInfoAdder
@@ -24,19 +17,17 @@ func NewUrlShortener(idGenerator domain.IdGenerator, store domain.MappingInfoAdd
 	}
 }
 
-func (u *UrlShortener) AddTokenForUrl(ctx context.Context, originalUrl string) (string, error) {
-	parsedUrl, err := url.ParseRequestURI(originalUrl)
-	if err != nil || parsedUrl.Host == "" {
-		return "", &domain.InvalidUrlError{Msg: fmt.Sprintf("Invalid url provided: %s", originalUrl)}
-	} else if _, valid := validSchemes[parsedUrl.Scheme]; !valid {
-		return "", &domain.InvalidUrlError{Msg: fmt.Sprintf("Unsupported URL scheme: %s", parsedUrl.Scheme)}
+func (u *UrlShortener) ShortenUrl(ctx context.Context, originalUrl string) (domain.MappingInfo, error) {
+	err := domain.ValidateURL(originalUrl)
+	if err != nil {
+		return domain.MappingInfo{}, err
 	}
 
 	id, err := u.idGenerator.GetNextId(ctx)
 	if err != nil {
-		return "", err
+		return domain.MappingInfo{}, err
 	}
 
 	urlToken := domain.GenerateToken(id)
-	return urlToken, u.store.AddNewMapping(ctx, id, originalUrl, urlToken)
+	return u.store.AddNewMapping(ctx, id, originalUrl, urlToken)
 }

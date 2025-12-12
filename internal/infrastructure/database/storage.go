@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"time"
 	"url-shortening-service/internal/domain"
 
 	"github.com/jackc/pgx/v5"
@@ -32,7 +33,7 @@ func (s *PostgresStorage) Close() {
 	s.dbpool.Close()
 }
 
-func (s *PostgresStorage) GetMapping(ctx context.Context, urlToken string) (domain.MappingInfo, bool) {
+func (s *PostgresStorage) GetMappingByToken(ctx context.Context, urlToken string) (domain.MappingInfo, bool) {
 	sql := `SELECT id, original_url, url_token FROM mappings WHERE url_token = $1`
 	var mapping domain.MappingInfo
 
@@ -47,15 +48,16 @@ func (s *PostgresStorage) GetMapping(ctx context.Context, urlToken string) (doma
 	return mapping, true
 }
 
-func (s *PostgresStorage) AddNewMapping(ctx context.Context, id int64, originalUrl string, urlToken string) error {
-	sql := `INSERT INTO mappings (id, original_url, url_token) VALUES ($1, $2, $3)`
+func (s *PostgresStorage) AddNewMapping(ctx context.Context, id int64, originalUrl string, urlToken string) (domain.MappingInfo, error) {
+	sql := `INSERT INTO mappings (id, original_url, url_token) VALUES ($1, $2, $3) RETURNING id, original_url, url_token, created_at`
+	var result domain.MappingInfo
 
-	_, err := s.dbpool.Exec(ctx, sql, id, originalUrl, urlToken)
+	err := s.dbpool.QueryRow(ctx, sql, id, originalUrl, urlToken).Scan(&result.Id, &result.OriginalURL, &result.Token, &result.CreatedAt)
 	if err != nil {
-		return fmt.Errorf("failed to add new mapping to db: %w", err)
+		return domain.MappingInfo{}, fmt.Errorf("failed to add new mapping to db: %w", err)
 	}
 
-	return nil
+	return result, nil
 }
 
 func (s *PostgresStorage) GetLastId(ctx context.Context) (int64, error) {
@@ -73,4 +75,18 @@ func (s *PostgresStorage) GetLastId(ctx context.Context) (int64, error) {
 	s.logger.Info(fmt.Sprintf("Retrieved last mapping id is: %d", lastId))
 
 	return lastId, nil
+}
+
+func (s *PostgresStorage) UpdateOriginalUrl(ctx context.Context, urlToken string, newOriginalUrl string) (domain.MappingInfo, error) {
+	sql := `UPDATE mappings SET original_url = $1, updated_at = $2 WHERE url_token = $3 RETURNING id, original_url, url_token, created_at, updated_at`
+	var updatedMapping domain.MappingInfo
+
+	err := s.dbpool.QueryRow(ctx, sql, newOriginalUrl, time.Now(), urlToken).Scan(&updatedMapping.Id, &updatedMapping.OriginalURL, &updatedMapping.Token, &updatedMapping.CreatedAt, &updatedMapping.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		return domain.MappingInfo{}, &domain.TokenNonExistingError{Msg: fmt.Sprintf("No mapping with token %s found", urlToken)}
+	} else if err != nil {
+		return domain.MappingInfo{}, fmt.Errorf("failed to update original URL in db: %w", err)
+	}
+
+	return updatedMapping, nil
 }

@@ -98,8 +98,9 @@ func main() {
 
 	getUrlCase := application.NewUrlGetter(localCache, storage, logger)
 	shortenUrlCase := application.NewUrlShortener(idGenerator, storage)
+	updateUrlCase := application.NewUrlUpdater(localCache, storage, logger)
 
-	server := http.NewSimpleServer(*shortenUrlCase, *getUrlCase, logger, serverPort)
+	server := http.NewSimpleServer(*shortenUrlCase, *getUrlCase, *updateUrlCase, logger, serverPort)
 	logger.Info("Starting server")
 	server.Start()
 	logger.Info("Server closed")

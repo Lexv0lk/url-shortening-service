@@ -16,9 +16,9 @@ func NewLocalStorage() *LocalStorage {
 	}
 }
 
-func (s *LocalStorage) AddNewMapping(ctx context.Context, id int64, originalUrl string, urlToken string) error {
-	if _, found := s.storage[id]; found {
-		return &domain.UrlExistingError{Msg: fmt.Sprintf("Duplicate mapping id %d", id)}
+func (s *LocalStorage) AddNewMapping(ctx context.Context, id int64, originalUrl string, urlToken string) (domain.MappingInfo, error) {
+	if info, found := s.storage[id]; found {
+		return info, &domain.UrlExistingError{Msg: fmt.Sprintf("Duplicate mapping id %d", id)}
 	}
 
 	s.storage[id] = domain.MappingInfo{
@@ -27,7 +27,7 @@ func (s *LocalStorage) AddNewMapping(ctx context.Context, id int64, originalUrl 
 		Token:       urlToken,
 	}
 
-	return nil
+	return s.storage[id], nil
 }
 
 func (s *LocalStorage) GetMapping(ctx context.Context, urlToken string) (domain.MappingInfo, bool) {
