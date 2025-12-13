@@ -14,6 +14,7 @@ const (
 	UrlTokenStr       = "urlToken"
 	RedirectAddress   = "GET /{" + UrlTokenStr + "}"
 	UpdateUrlAddress  = "PUT /{" + UrlTokenStr + "}"
+	DeleteUrlAddress  = "DELETE /{" + UrlTokenStr + "}"
 )
 
 var validSchemes = map[string]bool{

@@ -20,6 +20,10 @@ type UrlTokenSetter interface {
 	SetMapping(ctx context.Context, originalUrl, urlToken string) error
 }
 
+type UrlTokenDeleter interface {
+	DeleteMapping(ctx context.Context, urlToken string) error
+}
+
 type MappingInfoGetter interface {
 	GetMappingByToken(ctx context.Context, urlToken string) (MappingInfo, bool)
 }
@@ -34,6 +38,10 @@ type MappingInfoAdder interface {
 
 type MappingInfoUpdater interface {
 	UpdateOriginalUrl(ctx context.Context, urlToken string, newOriginalUrl string) (MappingInfo, error)
+}
+
+type MappingInfoDeleter interface {
+	DeleteMappingInfo(ctx context.Context, urlToken string) error
 }
 
 type IdGenerator interface {

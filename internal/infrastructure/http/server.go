@@ -13,6 +13,7 @@ type HandlersServer struct {
 	urlAdder   application.UrlShortener
 	urlGetter  application.UrlGetter
 	urlUpdater application.UrlUpdater
+	urlDeleter application.UrlDeleter
 	logger     domain.Logger
 	port       string
 
@@ -23,6 +24,7 @@ func NewSimpleServer(
 	urlAdder application.UrlShortener,
 	urlGetter application.UrlGetter,
 	urlUpdater application.UrlUpdater,
+	urlDeleter application.UrlDeleter,
 	logger domain.Logger,
 	port string,
 ) *HandlersServer {
@@ -31,6 +33,7 @@ func NewSimpleServer(
 		urlAdder:   urlAdder,
 		urlGetter:  urlGetter,
 		urlUpdater: urlUpdater,
+		urlDeleter: urlDeleter,
 		logger:     logger,
 		once:       &sync.Once{},
 		port:       port,
@@ -46,10 +49,12 @@ func (s *HandlersServer) startServer() {
 	shortenUrlHandler := handlers.NewAddUrlHandler(s.urlAdder, s.logger)
 	redirectHandler := handlers.NewRedirectHandler(s.urlGetter, s.logger)
 	updateUrlHandler := handlers.NewUpdateUrlHandler(s.urlUpdater, s.logger)
+	deleteUrlHandler := handlers.NewDeleteUrlHandler(s.urlDeleter, s.logger)
 
 	mux.HandleFunc(domain.ShortenUrlAddress, shortenUrlHandler.Create)
 	mux.HandleFunc(domain.RedirectAddress, redirectHandler.Redirect)
 	mux.HandleFunc(domain.UpdateUrlAddress, updateUrlHandler.Update)
+	mux.HandleFunc(domain.DeleteUrlAddress, deleteUrlHandler.Delete)
 
 	if err := http.ListenAndServe(":"+s.port, mux); err != nil {
 		s.logger.Error("Failed to start HTTP server: " + err.Error())

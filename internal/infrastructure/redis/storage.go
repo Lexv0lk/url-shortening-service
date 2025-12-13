@@ -35,3 +35,15 @@ func (s *RedisStorage) GetOriginalUrl(ctx context.Context, shortUrl string) (str
 func (s *RedisStorage) SetMapping(ctx context.Context, originalUrl, urlToken string) error {
 	return s.client.Set(ctx, urlToken, originalUrl, 0).Err()
 }
+
+func (s *RedisStorage) DeleteMapping(ctx context.Context, urlToken string) error {
+	n, err := s.client.Del(ctx, urlToken).Result()
+
+	if err != nil {
+		return err
+	} else if n == 0 {
+		return &domain.TokenNonExistingError{Msg: fmt.Sprintf("URL token not found in redis: %s", urlToken)}
+	}
+
+	return nil
+}

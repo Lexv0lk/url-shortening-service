@@ -90,3 +90,16 @@ func (s *PostgresStorage) UpdateOriginalUrl(ctx context.Context, urlToken string
 
 	return updatedMapping, nil
 }
+
+func (s *PostgresStorage) DeleteMappingInfo(ctx context.Context, urlToken string) error {
+	sql := `DELETE FROM mappings WHERE url_token = $1`
+
+	cmdTag, err := s.dbpool.Exec(ctx, sql, urlToken)
+	if err != nil {
+		return fmt.Errorf("failed to delete mapping from db: %w", err)
+	} else if cmdTag.RowsAffected() == 0 {
+		return &domain.TokenNonExistingError{Msg: fmt.Sprintf("No mapping with token %s found", urlToken)}
+	}
+
+	return nil
+}
