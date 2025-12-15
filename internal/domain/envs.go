@@ -10,4 +10,6 @@ const (
 	DatabasePortEnv     = "DB_PORT"
 	DatabaseNameEnv     = "DB_NAME"
 	DatabaseSslEnv      = "DB_SSL"
+	KafkaHostEnv        = "KAFKA_HOST"
+	KafkaPortEnv        = "KAFKA_PORT"
 )

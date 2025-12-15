@@ -7,12 +7,16 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"url-shortening-service/internal/application"
+	"time"
+	"url-shortening-service/internal/application/stats"
+	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 	"url-shortening-service/internal/infrastructure/database"
 	"url-shortening-service/internal/infrastructure/http"
+	"url-shortening-service/internal/infrastructure/kafka/statsbus"
 	rediswrap "url-shortening-service/internal/infrastructure/redis"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 	"github.com/redis/go-redis/v9"
 
@@ -26,6 +30,8 @@ func main() {
 	redisUrl := "localhost"
 	redisPort := "6379"
 	serverPort := "8080"
+	kafkaHost := "localhost"
+	kafkaPort := "9092"
 
 	databaseSettings := domain.PostgresSettings{
 		User:       "admin",
@@ -67,9 +73,16 @@ func main() {
 			databaseSettings.SSlEnabled = true
 		}
 	}
+	if envKafkaHost, found := os.LookupEnv(domain.KafkaHostEnv); found {
+		kafkaHost = envKafkaHost
+	}
+	if envKafkaPort, found := os.LookupEnv(domain.KafkaPortEnv); found {
+		kafkaPort = envKafkaPort
+	}
 
 	logger := domain.StdoutLogger
 	databaseUrl := databaseSettings.GetUrl()
+	kafkaUrl := kafkaHost + ":" + kafkaPort
 
 	err := migrateDatabase(databaseUrl)
 	if err != nil {
@@ -77,12 +90,15 @@ func main() {
 		return
 	}
 
-	storage, err := database.NewPostgresStorage(context.Background(), databaseSettings, logger)
+	dbpool, err := pgxpool.New(context.Background(), databaseUrl)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Error while creating Postgres storage: %v", err))
+		logger.Error(fmt.Sprintf("Unable to connect to database: %v", err))
 		return
 	}
-	defer storage.Close()
+	defer dbpool.Close()
+
+	storage := database.NewPostgresStorage(dbpool, logger)
+	statsStorage := database.NewPostgersStatsStorage(dbpool, logger)
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: redisUrl + ":" + redisPort,
@@ -96,12 +112,20 @@ func main() {
 		return
 	}
 
-	getUrlCase := application.NewUrlGetter(localCache, storage, logger)
-	shortenUrlCase := application.NewUrlShortener(idGenerator, storage)
-	updateUrlCase := application.NewUrlUpdater(localCache, storage, logger)
-	deleteUrlCase := application.NewUrlDeleter(localCache, storage, logger)
+	getUrlCase := urlcases.NewUrlGetter(localCache, storage, logger)
+	shortenUrlCase := urlcases.NewUrlShortener(idGenerator, storage)
+	updateUrlCase := urlcases.NewUrlUpdater(localCache, storage, logger)
+	deleteUrlCase := urlcases.NewUrlDeleter(localCache, storage, logger)
+	statsProcessor := stats.NewRedirectStatsProcessor(statsStorage, logger)
 
-	server := http.NewSimpleServer(*shortenUrlCase, *getUrlCase, *updateUrlCase, *deleteUrlCase, logger, serverPort)
+	topicId := "url_stats_events"
+	groupId := "url_stats_group"
+	eventProducer := statsbus.NewKafkaEventProducer(topicId, 10*time.Millisecond, kafkaUrl)
+	eventConsumer := statsbus.NewKafkaEventConsumer(topicId, groupId, statsProcessor, logger, kafkaUrl)
+
+	go eventConsumer.StartConsuming(context.Background())
+
+	server := http.NewSimpleServer(*shortenUrlCase, *getUrlCase, *updateUrlCase, *deleteUrlCase, eventProducer, logger, serverPort)
 	logger.Info("Starting server")
 	server.Start()
 	logger.Info("Server closed")

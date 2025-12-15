@@ -3,40 +3,43 @@ package http
 import (
 	"net/http"
 	"sync"
-	"url-shortening-service/internal/application"
+	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 	"url-shortening-service/internal/infrastructure/http/handlers"
 )
 
 type HandlersServer struct {
-	mux        *http.ServeMux
-	urlAdder   application.UrlShortener
-	urlGetter  application.UrlGetter
-	urlUpdater application.UrlUpdater
-	urlDeleter application.UrlDeleter
-	logger     domain.Logger
-	port       string
+	mux         *http.ServeMux
+	urlAdder    urlcases.UrlShortener
+	urlGetter   urlcases.UrlGetter
+	urlUpdater  urlcases.UrlUpdater
+	urlDeleter  urlcases.UrlDeleter
+	statsSender domain.StatisticsSender
+	logger      domain.Logger
+	port        string
 
 	once *sync.Once
 }
 
 func NewSimpleServer(
-	urlAdder application.UrlShortener,
-	urlGetter application.UrlGetter,
-	urlUpdater application.UrlUpdater,
-	urlDeleter application.UrlDeleter,
+	urlAdder urlcases.UrlShortener,
+	urlGetter urlcases.UrlGetter,
+	urlUpdater urlcases.UrlUpdater,
+	urlDeleter urlcases.UrlDeleter,
+	statsSender domain.StatisticsSender,
 	logger domain.Logger,
 	port string,
 ) *HandlersServer {
 	return &HandlersServer{
-		mux:        http.NewServeMux(),
-		urlAdder:   urlAdder,
-		urlGetter:  urlGetter,
-		urlUpdater: urlUpdater,
-		urlDeleter: urlDeleter,
-		logger:     logger,
-		once:       &sync.Once{},
-		port:       port,
+		mux:         http.NewServeMux(),
+		urlAdder:    urlAdder,
+		urlGetter:   urlGetter,
+		urlUpdater:  urlUpdater,
+		urlDeleter:  urlDeleter,
+		statsSender: statsSender,
+		logger:      logger,
+		once:        &sync.Once{},
+		port:        port,
 	}
 }
 
@@ -47,7 +50,7 @@ func (s *HandlersServer) Start() {
 func (s *HandlersServer) startServer() {
 	mux := http.NewServeMux()
 	shortenUrlHandler := handlers.NewAddUrlHandler(s.urlAdder, s.logger)
-	redirectHandler := handlers.NewRedirectHandler(s.urlGetter, s.logger)
+	redirectHandler := handlers.NewRedirectHandler(s.urlGetter, s.statsSender, s.logger)
 	updateUrlHandler := handlers.NewUpdateUrlHandler(s.urlUpdater, s.logger)
 	deleteUrlHandler := handlers.NewDeleteUrlHandler(s.urlDeleter, s.logger)
 

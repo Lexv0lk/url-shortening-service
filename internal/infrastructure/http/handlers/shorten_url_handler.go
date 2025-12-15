@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"url-shortening-service/internal/application"
+	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 )
 
 type ShortenUrlHandler struct {
-	urlShortener application.UrlShortener
+	urlShortener urlcases.UrlShortener
 	logger       domain.Logger
 }
 
@@ -18,7 +18,7 @@ type ShortenUrlRequest struct {
 	URL string `json:"url"`
 }
 
-func NewAddUrlHandler(urlShortener application.UrlShortener, logger domain.Logger) *ShortenUrlHandler {
+func NewAddUrlHandler(urlShortener urlcases.UrlShortener, logger domain.Logger) *ShortenUrlHandler {
 	return &ShortenUrlHandler{
 		urlShortener: urlShortener,
 		logger:       logger,

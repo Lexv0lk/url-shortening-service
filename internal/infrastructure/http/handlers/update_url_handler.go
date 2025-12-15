@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"url-shortening-service/internal/application"
+	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 )
 
 type UpdaterUrlHandler struct {
-	urlUpdater application.UrlUpdater
+	urlUpdater urlcases.UrlUpdater
 	logger     domain.Logger
 }
 
@@ -18,7 +18,7 @@ type UpdateUrlRequest struct {
 	NewURL string `json:"url"`
 }
 
-func NewUpdateUrlHandler(urlUpdater application.UrlUpdater, logger domain.Logger) *UpdaterUrlHandler {
+func NewUpdateUrlHandler(urlUpdater urlcases.UrlUpdater, logger domain.Logger) *UpdaterUrlHandler {
 	return &UpdaterUrlHandler{
 		urlUpdater: urlUpdater,
 		logger:     logger,

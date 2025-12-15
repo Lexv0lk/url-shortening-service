@@ -3,16 +3,16 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"url-shortening-service/internal/application"
+	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 )
 
 type DeleteUrlHandler struct {
-	urlDeleter application.UrlDeleter
+	urlDeleter urlcases.UrlDeleter
 	logger     domain.Logger
 }
 
-func NewDeleteUrlHandler(urlDeleter application.UrlDeleter, logger domain.Logger) *DeleteUrlHandler {
+func NewDeleteUrlHandler(urlDeleter urlcases.UrlDeleter, logger domain.Logger) *DeleteUrlHandler {
 	return &DeleteUrlHandler{
 		urlDeleter: urlDeleter,
 		logger:     logger,

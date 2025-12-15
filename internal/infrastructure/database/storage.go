@@ -15,22 +15,11 @@ type PostgresStorage struct {
 	logger domain.Logger
 }
 
-func NewPostgresStorage(ctx context.Context, settings domain.PostgresSettings, logger domain.Logger) (*PostgresStorage, error) {
-	connectionUrl := settings.GetUrl()
-
-	dbpool, err := pgxpool.New(ctx, connectionUrl)
-	if err != nil {
-		return nil, err
-	}
-
+func NewPostgresStorage(dbpool *pgxpool.Pool, logger domain.Logger) *PostgresStorage {
 	return &PostgresStorage{
 		dbpool: dbpool,
 		logger: logger,
-	}, nil
-}
-
-func (s *PostgresStorage) Close() {
-	s.dbpool.Close()
+	}
 }
 
 func (s *PostgresStorage) GetMappingByToken(ctx context.Context, urlToken string) (domain.MappingInfo, bool) {
