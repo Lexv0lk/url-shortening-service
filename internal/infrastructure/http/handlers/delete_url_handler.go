@@ -7,11 +7,16 @@ import (
 	"url-shortening-service/internal/domain"
 )
 
+// DeleteUrlHandler handles HTTP requests for deleting URL mappings.
 type DeleteUrlHandler struct {
 	urlDeleter urlcases.UrlDeleter
 	logger     domain.Logger
 }
 
+// NewDeleteUrlHandler creates a new DeleteUrlHandler instance.
+// Parameters:
+//   - urlDeleter: service for deleting URL mappings
+//   - logger: logger for recording errors
 func NewDeleteUrlHandler(urlDeleter urlcases.UrlDeleter, logger domain.Logger) *DeleteUrlHandler {
 	return &DeleteUrlHandler{
 		urlDeleter: urlDeleter,
@@ -19,6 +24,13 @@ func NewDeleteUrlHandler(urlDeleter urlcases.UrlDeleter, logger domain.Logger) *
 	}
 }
 
+// Delete handles DELETE requests to remove a URL mapping.
+// It extracts the URL token from the path and deletes the corresponding mapping.
+//
+// HTTP Responses:
+//   - 204 No Content: mapping successfully deleted
+//   - 404 Not Found: URL token does not exist
+//   - 500 Internal Server Error: unexpected error occurred
 func (h *DeleteUrlHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	urlToken := r.PathValue(domain.UrlTokenStr)
 

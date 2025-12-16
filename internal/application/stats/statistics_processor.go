@@ -17,11 +17,17 @@ const (
 	botStr     = "Bot"
 )
 
+// RedirectStatsProcessor processes raw redirect statistics events,
+// enriching them with geolocation and device information before storage.
 type RedirectStatsProcessor struct {
 	statsStorage domain.StatsEventAdder
 	logger       domain.Logger
 }
 
+// NewRedirectStatsProcessor creates a new RedirectStatsProcessor instance.
+// Parameters:
+//   - statsStorage: storage for persisting processed events
+//   - logger: logger for recording warnings and errors
 func NewRedirectStatsProcessor(statsStorage domain.StatsEventAdder, logger domain.Logger) *RedirectStatsProcessor {
 	return &RedirectStatsProcessor{
 		statsStorage: statsStorage,
@@ -29,6 +35,13 @@ func NewRedirectStatsProcessor(statsStorage domain.StatsEventAdder, logger domai
 	}
 }
 
+// ProcessEvent processes a raw statistics event from JSON byte data.
+// It parses the event, enriches it with geolocation and device type information,
+// and stores the processed event.
+//
+// Returns an error if:
+//   - JSON parsing fails
+//   - Storage operation fails
 func (rsp *RedirectStatsProcessor) ProcessEvent(ctx context.Context, eventData []byte) error {
 	rawEvent, err := parseEvent(eventData)
 	if err != nil {

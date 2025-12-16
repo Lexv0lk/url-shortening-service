@@ -11,6 +11,9 @@ import (
 	"url-shortening-service/internal/domain"
 )
 
+// RedirectHandler handles HTTP requests for URL redirection.
+// It retrieves the original URL and redirects the client, while also
+// sending statistics events for analytics.
 type RedirectHandler struct {
 	urlGetter   urlcases.UrlGetter
 	statsSender domain.StatisticsSender
@@ -21,6 +24,11 @@ type RedirectRequest struct {
 	Token string
 }
 
+// NewRedirectHandler creates a new RedirectHandler instance.
+// Parameters:
+//   - urlGetter: service for retrieving original URLs
+//   - statsSender: sender for statistics events
+//   - logger: logger for recording warnings and errors
 func NewRedirectHandler(urlGetter urlcases.UrlGetter, statsSender domain.StatisticsSender, logger domain.Logger) *RedirectHandler {
 	return &RedirectHandler{
 		urlGetter:   urlGetter,
@@ -29,6 +37,14 @@ func NewRedirectHandler(urlGetter urlcases.UrlGetter, statsSender domain.Statist
 	}
 }
 
+// Redirect handles GET requests to redirect from short URL to original URL.
+// It retrieves the original URL, sends a statistics event asynchronously,
+// and redirects the client with HTTP 307 Temporary Redirect.
+//
+// HTTP Responses:
+//   - 307 Temporary Redirect: successful redirect to original URL
+//   - 404 Not Found: URL token does not exist
+//   - 500 Internal Server Error: unexpected error occurred
 func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	token := r.PathValue(domain.UrlTokenStr)
 

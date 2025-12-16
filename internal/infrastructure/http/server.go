@@ -8,6 +8,8 @@ import (
 	"url-shortening-service/internal/infrastructure/http/handlers"
 )
 
+// HandlersServer is the HTTP server that handles all URL shortening service endpoints.
+// It registers handlers for URL creation, retrieval, update, deletion, and statistics.
 type HandlersServer struct {
 	mux             *http.ServeMux
 	urlAdder        urlcases.UrlShortener
@@ -22,6 +24,7 @@ type HandlersServer struct {
 	once *sync.Once
 }
 
+// NewSimpleServer creates a new HandlersServer instance with all required dependencies.
 func NewSimpleServer(
 	urlAdder urlcases.UrlShortener,
 	urlGetter urlcases.UrlGetter,
@@ -46,6 +49,9 @@ func NewSimpleServer(
 	}
 }
 
+// Start starts the HTTP server. This method is safe to call multiple times;
+// the server will only be started once.
+// The server listens on the configured port and blocks until an error occurs.
 func (s *HandlersServer) Start() {
 	s.once.Do(s.startServer)
 }

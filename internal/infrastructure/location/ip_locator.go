@@ -11,11 +11,20 @@ const (
 	defaultLang = "en"
 )
 
+// IPLocation represents geographic location data resolved from an IP address.
 type IPLocation struct {
-	City    string
+	// City is the city name resolved from the IP address.
+	City string
+	// Country is the country name resolved from the IP address.
 	Country string
 }
 
+// LocateIP resolves an IP address to its geographic location using GeoLite2 database.
+// It returns the city and country names in English.
+//
+// Returns an error if:
+//   - The GeoLite2 database cannot be opened
+//   - The IP address cannot be parsed or located
 func LocateIP(ip string) (IPLocation, error) {
 	db, err := geoip2.Open(dbPath)
 	if err != nil {

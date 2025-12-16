@@ -2,6 +2,7 @@ package domain
 
 //region UrlExistingError
 
+// UrlExistingError is returned when attempting to create a mapping for a URL that already exists.
 type UrlExistingError struct {
 	Msg string
 }
@@ -19,6 +20,7 @@ func (e *UrlExistingError) Is(target error) bool {
 
 //region UrlNonExistingError
 
+// UrlNonExistingError is returned when a requested URL mapping does not exist in storage.
 type UrlNonExistingError struct {
 	Msg string
 }
@@ -36,6 +38,7 @@ func (e *UrlNonExistingError) Is(target error) bool {
 
 //region InvalidUrlError
 
+// InvalidUrlError is returned when the provided URL has invalid format or unsupported scheme.
 type InvalidUrlError struct {
 	Msg string
 }
@@ -53,6 +56,7 @@ func (e *InvalidUrlError) Is(target error) bool {
 
 //region TokenNonExistingError
 
+// TokenNonExistingError is returned when a requested URL token does not exist in storage.
 type TokenNonExistingError struct {
 	Msg string
 }

@@ -9,11 +9,16 @@ import (
 	"url-shortening-service/internal/domain"
 )
 
+// StatsShowHandler handles HTTP requests for displaying URL statistics.
 type StatsShowHandler struct {
 	statsCalculator domain.StatisticsCalculator
 	logger          domain.Logger
 }
 
+// NewStatsShowHandler creates a new StatsShowHandler instance.
+// Parameters:
+//   - statsCalculator: service for calculating URL statistics
+//   - logger: logger for recording errors
 func NewStatsShowHandler(statsCalculator domain.StatisticsCalculator, logger domain.Logger) *StatsShowHandler {
 	return &StatsShowHandler{
 		statsCalculator: statsCalculator,
@@ -21,6 +26,14 @@ func NewStatsShowHandler(statsCalculator domain.StatisticsCalculator, logger dom
 	}
 }
 
+// Show handles GET requests to display statistics for a URL token.
+// It returns aggregated statistics including clicks, geographic data,
+// device types, and referrer information.
+//
+// HTTP Responses:
+//   - 200 OK: returns CalculatedStatistics JSON
+//   - 404 Not Found: no statistics exist for the given token
+//   - 500 Internal Server Error: unexpected error occurred
 func (h *StatsShowHandler) Show(w http.ResponseWriter, r *http.Request) {
 	token := r.PathValue(domain.UrlTokenStr)
 

@@ -8,11 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PostgresStatsCalculator calculates aggregated statistics from PostgreSQL.
+// It provides statistics about URL access patterns including geographic and device data.
 type PostgresStatsCalculator struct {
 	dbpool *pgxpool.Pool
 	logger domain.Logger
 }
 
+// NewPostgresStatsCalculator creates a new PostgresStatsCalculator instance.
+// Parameters:
+//   - dbpool: PostgreSQL connection pool
+//   - logger: logger for recording errors
 func NewPostgresStatsCalculator(dbpool *pgxpool.Pool, logger domain.Logger) *PostgresStatsCalculator {
 	return &PostgresStatsCalculator{
 		dbpool: dbpool,
@@ -20,6 +26,13 @@ func NewPostgresStatsCalculator(dbpool *pgxpool.Pool, logger domain.Logger) *Pos
 	}
 }
 
+// CalculateStatistics computes aggregated statistics for a given URL token.
+// It returns total clicks, country distribution, city distribution,
+// device type breakdown, and referrer statistics.
+//
+// Returns an error if:
+//   - *domain.TokenNonExistingError: no statistics exist for the given token
+//   - Database query fails
 func (s *PostgresStatsCalculator) CalculateStatistics(ctx context.Context, urlToken string) (domain.CalculatedStatistics, error) {
 	stats := domain.CalculatedStatistics{
 		UrlToken:        urlToken,

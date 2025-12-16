@@ -10,11 +10,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PostgresStorage implements URL mapping storage operations using PostgreSQL.
+// It provides CRUD operations for URL mappings with PostgreSQL as the backend.
 type PostgresStorage struct {
 	dbpool *pgxpool.Pool
 	logger domain.Logger
 }
 
+// NewPostgresStorage creates a new PostgresStorage instance.
+// Parameters:
+//   - dbpool: PostgreSQL connection pool
+//   - logger: logger for recording errors and info messages
 func NewPostgresStorage(dbpool *pgxpool.Pool, logger domain.Logger) *PostgresStorage {
 	return &PostgresStorage{
 		dbpool: dbpool,
@@ -22,6 +28,9 @@ func NewPostgresStorage(dbpool *pgxpool.Pool, logger domain.Logger) *PostgresSto
 	}
 }
 
+// GetMappingByToken retrieves a URL mapping by its token from PostgreSQL.
+// Returns the MappingInfo and true if found, or empty MappingInfo and false if not found.
+// Database errors are logged and result in returning false.
 func (s *PostgresStorage) GetMappingByToken(ctx context.Context, urlToken string) (domain.MappingInfo, bool) {
 	sql := `SELECT id, original_url, url_token FROM mappings WHERE url_token = $1`
 	var mapping domain.MappingInfo
@@ -37,6 +46,10 @@ func (s *PostgresStorage) GetMappingByToken(ctx context.Context, urlToken string
 	return mapping, true
 }
 
+// AddNewMapping creates a new URL mapping in PostgreSQL.
+// Returns the created MappingInfo with ID, URL, token, and creation timestamp.
+//
+// Returns an error if the database operation fails.
 func (s *PostgresStorage) AddNewMapping(ctx context.Context, id int64, originalUrl string, urlToken string) (domain.MappingInfo, error) {
 	sql := `INSERT INTO mappings (id, original_url, url_token) VALUES ($1, $2, $3) RETURNING id, original_url, url_token, created_at`
 	var result domain.MappingInfo
@@ -49,6 +62,10 @@ func (s *PostgresStorage) AddNewMapping(ctx context.Context, id int64, originalU
 	return result, nil
 }
 
+// GetLastId retrieves the highest ID from the mappings table.
+// Returns 0 if no mappings exist.
+//
+// Returns an error if the database query fails.
 func (s *PostgresStorage) GetLastId(ctx context.Context) (int64, error) {
 	sql := `SELECT id FROM mappings ORDER BY id DESC LIMIT 1`
 	var lastId int64
@@ -66,6 +83,12 @@ func (s *PostgresStorage) GetLastId(ctx context.Context) (int64, error) {
 	return lastId, nil
 }
 
+// UpdateOriginalUrl updates the original URL for an existing token.
+// Returns the updated MappingInfo with new timestamps.
+//
+// Returns an error if:
+//   - *domain.TokenNonExistingError: no mapping with the given token exists
+//   - Database operation fails
 func (s *PostgresStorage) UpdateOriginalUrl(ctx context.Context, urlToken string, newOriginalUrl string) (domain.MappingInfo, error) {
 	sql := `UPDATE mappings SET original_url = $1, updated_at = $2 WHERE url_token = $3 RETURNING id, original_url, url_token, created_at, updated_at`
 	var updatedMapping domain.MappingInfo
@@ -80,6 +103,11 @@ func (s *PostgresStorage) UpdateOriginalUrl(ctx context.Context, urlToken string
 	return updatedMapping, nil
 }
 
+// DeleteMappingInfo removes a URL mapping from PostgreSQL by its token.
+//
+// Returns an error if:
+//   - *domain.TokenNonExistingError: no mapping with the given token exists
+//   - Database operation fails
 func (s *PostgresStorage) DeleteMappingInfo(ctx context.Context, urlToken string) error {
 	sql := `DELETE FROM mappings WHERE url_token = $1`
 

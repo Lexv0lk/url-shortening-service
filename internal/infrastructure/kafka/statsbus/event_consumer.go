@@ -8,12 +8,15 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// KafkaEventConsumer consumes statistics events from Kafka and processes them.
+// It reads messages from a Kafka topic and delegates processing to a StatisticsProcessor.
 type KafkaEventConsumer struct {
 	reader         *kafka.Reader
 	statsProcessor domain.StatisticsProcessor
 	logger         domain.Logger
 }
 
+// NewKafkaEventConsumer creates a new KafkaEventConsumer instance.
 func NewKafkaEventConsumer(topic, groupId string, statsProcessor domain.StatisticsProcessor, logger domain.Logger, brokers ...string) *KafkaEventConsumer {
 	return &KafkaEventConsumer{
 		reader: kafka.NewReader(kafka.ReaderConfig{
@@ -26,6 +29,10 @@ func NewKafkaEventConsumer(topic, groupId string, statsProcessor domain.Statisti
 	}
 }
 
+// StartConsuming starts consuming messages from Kafka in a blocking loop.
+// It continuously fetches messages, processes them, and commits offsets.
+// The loop terminates when the context is cancelled.
+// Errors during message fetch, processing, or commit are logged but don't stop the consumer.
 func (kec *KafkaEventConsumer) StartConsuming(ctx context.Context) {
 	defer func(reader *kafka.Reader) {
 		err := reader.Close()

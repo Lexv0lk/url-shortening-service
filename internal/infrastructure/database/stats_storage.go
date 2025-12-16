@@ -7,11 +7,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PostgersStatsStorage implements statistics event storage using PostgreSQL.
+// It persists processed redirect statistics events for later analysis.
 type PostgersStatsStorage struct {
 	dbpool *pgxpool.Pool
 	logger domain.Logger
 }
 
+// NewPostgresStatsStorage creates a new PostgersStatsStorage instance.
+// Parameters:
+//   - dbpool: PostgreSQL connection pool
+//   - logger: logger for recording errors
 func NewPostgresStatsStorage(dbpool *pgxpool.Pool, logger domain.Logger) *PostgersStatsStorage {
 	return &PostgersStatsStorage{
 		dbpool: dbpool,
@@ -19,6 +25,10 @@ func NewPostgresStatsStorage(dbpool *pgxpool.Pool, logger domain.Logger) *Postge
 	}
 }
 
+// AddStatsEvent persists a processed statistics event to PostgreSQL.
+// It stores URL token, timestamp, country, city, device type, and referrer.
+//
+// Returns an error if the database operation fails.
 func (s *PostgersStatsStorage) AddStatsEvent(ctx context.Context, event domain.ProcessedStatsEvent) error {
 	sql := `INSERT INTO stats_events (url_token, timestamp, country, city, device_type, referrer) VALUES ($1, $2, $3, $4, $5, $6)`
 

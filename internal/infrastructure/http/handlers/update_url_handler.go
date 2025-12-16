@@ -9,6 +9,7 @@ import (
 	"url-shortening-service/internal/domain"
 )
 
+// UpdaterUrlHandler handles HTTP requests for updating URL mappings.
 type UpdaterUrlHandler struct {
 	urlUpdater urlcases.UrlUpdater
 	logger     domain.Logger
@@ -18,6 +19,10 @@ type UpdateUrlRequest struct {
 	NewURL string `json:"url"`
 }
 
+// NewUpdateUrlHandler creates a new UpdaterUrlHandler instance.
+// Parameters:
+//   - urlUpdater: service for updating URL mappings
+//   - logger: logger for recording errors
 func NewUpdateUrlHandler(urlUpdater urlcases.UrlUpdater, logger domain.Logger) *UpdaterUrlHandler {
 	return &UpdaterUrlHandler{
 		urlUpdater: urlUpdater,
@@ -25,6 +30,14 @@ func NewUpdateUrlHandler(urlUpdater urlcases.UrlUpdater, logger domain.Logger) *
 	}
 }
 
+// Update handles PUT requests to update an existing URL mapping.
+// It expects a JSON body with the new URL and updates the mapping for the given token.
+//
+// HTTP Responses:
+//   - 200 OK: URL successfully updated, returns updated MappingInfo JSON
+//   - 400 Bad Request: invalid request payload or invalid URL format
+//   - 404 Not Found: URL token does not exist
+//   - 500 Internal Server Error: unexpected error occurred
 func (h *UpdaterUrlHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var req UpdateUrlRequest
 
