@@ -18,11 +18,11 @@ const (
 )
 
 type RedirectStatsProcessor struct {
-	statsStorage domain.StatisticsStorage
+	statsStorage domain.StatsEventAdder
 	logger       domain.Logger
 }
 
-func NewRedirectStatsProcessor(statsStorage domain.StatisticsStorage, logger domain.Logger) *RedirectStatsProcessor {
+func NewRedirectStatsProcessor(statsStorage domain.StatsEventAdder, logger domain.Logger) *RedirectStatsProcessor {
 	return &RedirectStatsProcessor{
 		statsStorage: statsStorage,
 		logger:       logger,
@@ -89,5 +89,5 @@ func getDeviceType(userAgent string) string {
 		return botStr
 	}
 
-	return unknowsStr
+	return info.Name
 }

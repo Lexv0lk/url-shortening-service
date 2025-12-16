@@ -6,15 +6,12 @@ import (
 )
 
 const (
-	BaseUrl = `http://localhost:8080`
-)
-
-const (
 	ShortenUrlAddress = "POST /shorten"
 	UrlTokenStr       = "urlToken"
 	RedirectAddress   = "GET /{" + UrlTokenStr + "}"
 	UpdateUrlAddress  = "PUT /{" + UrlTokenStr + "}"
 	DeleteUrlAddress  = "DELETE /{" + UrlTokenStr + "}"
+	StatsUrlAddress   = "GET /shorten/{" + UrlTokenStr + "}/stats"
 )
 
 var validSchemes = map[string]bool{

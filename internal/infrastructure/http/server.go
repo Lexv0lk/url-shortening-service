@@ -9,14 +9,15 @@ import (
 )
 
 type HandlersServer struct {
-	mux         *http.ServeMux
-	urlAdder    urlcases.UrlShortener
-	urlGetter   urlcases.UrlGetter
-	urlUpdater  urlcases.UrlUpdater
-	urlDeleter  urlcases.UrlDeleter
-	statsSender domain.StatisticsSender
-	logger      domain.Logger
-	port        string
+	mux             *http.ServeMux
+	urlAdder        urlcases.UrlShortener
+	urlGetter       urlcases.UrlGetter
+	urlUpdater      urlcases.UrlUpdater
+	urlDeleter      urlcases.UrlDeleter
+	statsSender     domain.StatisticsSender
+	statsCalculator domain.StatisticsCalculator
+	logger          domain.Logger
+	port            string
 
 	once *sync.Once
 }
@@ -27,19 +28,21 @@ func NewSimpleServer(
 	urlUpdater urlcases.UrlUpdater,
 	urlDeleter urlcases.UrlDeleter,
 	statsSender domain.StatisticsSender,
+	statsCalculator domain.StatisticsCalculator,
 	logger domain.Logger,
 	port string,
 ) *HandlersServer {
 	return &HandlersServer{
-		mux:         http.NewServeMux(),
-		urlAdder:    urlAdder,
-		urlGetter:   urlGetter,
-		urlUpdater:  urlUpdater,
-		urlDeleter:  urlDeleter,
-		statsSender: statsSender,
-		logger:      logger,
-		once:        &sync.Once{},
-		port:        port,
+		mux:             http.NewServeMux(),
+		urlAdder:        urlAdder,
+		urlGetter:       urlGetter,
+		urlUpdater:      urlUpdater,
+		urlDeleter:      urlDeleter,
+		statsSender:     statsSender,
+		statsCalculator: statsCalculator,
+		logger:          logger,
+		once:            &sync.Once{},
+		port:            port,
 	}
 }
 
@@ -53,11 +56,13 @@ func (s *HandlersServer) startServer() {
 	redirectHandler := handlers.NewRedirectHandler(s.urlGetter, s.statsSender, s.logger)
 	updateUrlHandler := handlers.NewUpdateUrlHandler(s.urlUpdater, s.logger)
 	deleteUrlHandler := handlers.NewDeleteUrlHandler(s.urlDeleter, s.logger)
+	statsHandler := handlers.NewStatsShowHandler(s.statsCalculator, s.logger)
 
 	mux.HandleFunc(domain.ShortenUrlAddress, shortenUrlHandler.Create)
 	mux.HandleFunc(domain.RedirectAddress, redirectHandler.Redirect)
 	mux.HandleFunc(domain.UpdateUrlAddress, updateUrlHandler.Update)
 	mux.HandleFunc(domain.DeleteUrlAddress, deleteUrlHandler.Delete)
+	mux.HandleFunc(domain.StatsUrlAddress, statsHandler.Show)
 
 	if err := http.ListenAndServe(":"+s.port, mux); err != nil {
 		s.logger.Error("Failed to start HTTP server: " + err.Error())

@@ -98,7 +98,7 @@ func main() {
 	defer dbpool.Close()
 
 	storage := database.NewPostgresStorage(dbpool, logger)
-	statsStorage := database.NewPostgersStatsStorage(dbpool, logger)
+	statsStorage := database.NewPostgresStatsStorage(dbpool, logger)
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: redisUrl + ":" + redisPort,
@@ -117,6 +117,7 @@ func main() {
 	updateUrlCase := urlcases.NewUrlUpdater(localCache, storage, logger)
 	deleteUrlCase := urlcases.NewUrlDeleter(localCache, storage, logger)
 	statsProcessor := stats.NewRedirectStatsProcessor(statsStorage, logger)
+	statsCalculator := database.NewPostgresStatsCalculator(dbpool, logger)
 
 	topicId := "url_stats_events"
 	groupId := "url_stats_group"
@@ -125,7 +126,7 @@ func main() {
 
 	go eventConsumer.StartConsuming(context.Background())
 
-	server := http.NewSimpleServer(*shortenUrlCase, *getUrlCase, *updateUrlCase, *deleteUrlCase, eventProducer, logger, serverPort)
+	server := http.NewSimpleServer(*shortenUrlCase, *getUrlCase, *updateUrlCase, *deleteUrlCase, eventProducer, statsCalculator, logger, serverPort)
 	logger.Info("Starting server")
 	server.Start()
 	logger.Info("Server closed")

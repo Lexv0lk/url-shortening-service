@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
@@ -43,7 +45,7 @@ func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	err = h.statsSender.SendEvent(context.Background(), domain.RawStatsEvent{
 		UrlToken:  token,
 		Timestamp: time.Now(),
-		IP:        r.RemoteAddr,
+		IP:        retrieveIP(r),
 		UserAgent: r.UserAgent(),
 		Referrer:  r.Referer(),
 	})
@@ -52,4 +54,24 @@ func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, originalUrl, http.StatusTemporaryRedirect)
+}
+
+func retrieveIP(r *http.Request) string {
+	xForwardedFor := r.Header.Get("X-Forwarded-For")
+	if xForwardedFor != "" {
+		if ip := strings.TrimSpace(strings.Split(xForwardedFor, ",")[0]); ip != "" {
+			return ip
+		}
+	}
+
+	xRealIP := r.Header.Get("X-Real-IP")
+	if xRealIP != "" {
+		return xRealIP
+	}
+
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
 }

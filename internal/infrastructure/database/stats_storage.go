@@ -12,7 +12,7 @@ type PostgersStatsStorage struct {
 	logger domain.Logger
 }
 
-func NewPostgersStatsStorage(dbpool *pgxpool.Pool, logger domain.Logger) *PostgersStatsStorage {
+func NewPostgresStatsStorage(dbpool *pgxpool.Pool, logger domain.Logger) *PostgersStatsStorage {
 	return &PostgersStatsStorage{
 		dbpool: dbpool,
 		logger: logger,
