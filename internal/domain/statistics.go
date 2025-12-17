@@ -1,3 +1,4 @@
+//go:generate mockgen -source=statistics.go -destination=mocks/statistics.go -package=mocks
 package domain
 
 import (
