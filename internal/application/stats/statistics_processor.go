@@ -21,6 +21,7 @@ const (
 // enriching them with geolocation and device information before storage.
 type RedirectStatsProcessor struct {
 	statsStorage domain.StatsEventAdder
+	ipLocator    location.IPLocator
 	logger       domain.Logger
 }
 
@@ -28,9 +29,10 @@ type RedirectStatsProcessor struct {
 // Parameters:
 //   - statsStorage: storage for persisting processed events
 //   - logger: logger for recording warnings and errors
-func NewRedirectStatsProcessor(statsStorage domain.StatsEventAdder, logger domain.Logger) *RedirectStatsProcessor {
+func NewRedirectStatsProcessor(statsStorage domain.StatsEventAdder, ipLocator location.IPLocator, logger domain.Logger) *RedirectStatsProcessor {
 	return &RedirectStatsProcessor{
 		statsStorage: statsStorage,
+		ipLocator:    ipLocator,
 		logger:       logger,
 	}
 }
@@ -63,7 +65,7 @@ func (rsp *RedirectStatsProcessor) convertEvent(event domain.RawStatsEvent) doma
 		Timestamp: event.Timestamp,
 	}
 
-	ipLocation, err := location.LocateIP(event.IP)
+	ipLocation, err := rsp.ipLocator.LocateIP(event.IP)
 	if err != nil {
 		rsp.logger.Warn("Failed to locate IP: " + err.Error())
 		processedEvent.Country = unknowsStr

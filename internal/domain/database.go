@@ -1,4 +1,28 @@
+//go:generate mockgen -destination=mocks/database.go -package=mocks . Querier
 package domain
+
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+type QueryExecutor interface {
+	Querier
+	Executor
+}
+
+// Querier defines an interface for executing SQL queries.
+type Querier interface {
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+}
+
+// Executor defines an interface for executing SQL commands.
+type Executor interface {
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+}
 
 // PostgresSettings contains configuration parameters for PostgreSQL database connection.
 type PostgresSettings struct {

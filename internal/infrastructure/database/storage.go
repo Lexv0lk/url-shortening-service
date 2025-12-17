@@ -7,24 +7,23 @@ import (
 	"url-shortening-service/internal/domain"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // PostgresStorage implements URL mapping storage operations using PostgreSQL.
 // It provides CRUD operations for URL mappings with PostgreSQL as the backend.
 type PostgresStorage struct {
-	dbpool *pgxpool.Pool
-	logger domain.Logger
+	queryExecutor domain.QueryExecutor
+	logger        domain.Logger
 }
 
 // NewPostgresStorage creates a new PostgresStorage instance.
 // Parameters:
-//   - dbpool: PostgreSQL connection pool
+//   - sqlExecutor: PostgreSQL connection pool
 //   - logger: logger for recording errors and info messages
-func NewPostgresStorage(dbpool *pgxpool.Pool, logger domain.Logger) *PostgresStorage {
+func NewPostgresStorage(queryExecutor domain.QueryExecutor, logger domain.Logger) *PostgresStorage {
 	return &PostgresStorage{
-		dbpool: dbpool,
-		logger: logger,
+		queryExecutor: queryExecutor,
+		logger:        logger,
 	}
 }
 
@@ -35,7 +34,7 @@ func (s *PostgresStorage) GetMappingByToken(ctx context.Context, urlToken string
 	sql := `SELECT id, original_url, url_token FROM mappings WHERE url_token = $1`
 	var mapping domain.MappingInfo
 
-	err := s.dbpool.QueryRow(ctx, sql, urlToken).Scan(&mapping.Id, &mapping.OriginalURL, &mapping.Token)
+	err := s.queryExecutor.QueryRow(ctx, sql, urlToken).Scan(&mapping.Id, &mapping.OriginalURL, &mapping.Token)
 	if err == pgx.ErrNoRows {
 		return domain.MappingInfo{}, false
 	} else if err != nil {
@@ -54,7 +53,7 @@ func (s *PostgresStorage) AddNewMapping(ctx context.Context, id int64, originalU
 	sql := `INSERT INTO mappings (id, original_url, url_token) VALUES ($1, $2, $3) RETURNING id, original_url, url_token, created_at`
 	var result domain.MappingInfo
 
-	err := s.dbpool.QueryRow(ctx, sql, id, originalUrl, urlToken).Scan(&result.Id, &result.OriginalURL, &result.Token, &result.CreatedAt)
+	err := s.queryExecutor.QueryRow(ctx, sql, id, originalUrl, urlToken).Scan(&result.Id, &result.OriginalURL, &result.Token, &result.CreatedAt)
 	if err != nil {
 		return domain.MappingInfo{}, fmt.Errorf("failed to add new mapping to db: %w", err)
 	}
@@ -70,7 +69,7 @@ func (s *PostgresStorage) GetLastId(ctx context.Context) (int64, error) {
 	sql := `SELECT id FROM mappings ORDER BY id DESC LIMIT 1`
 	var lastId int64
 
-	err := s.dbpool.QueryRow(ctx, sql).Scan(&lastId)
+	err := s.queryExecutor.QueryRow(ctx, sql).Scan(&lastId)
 	if err == pgx.ErrNoRows {
 		s.logger.Info("No existing mappings found in database.")
 		return 0, nil
@@ -93,7 +92,7 @@ func (s *PostgresStorage) UpdateOriginalUrl(ctx context.Context, urlToken string
 	sql := `UPDATE mappings SET original_url = $1, updated_at = $2 WHERE url_token = $3 RETURNING id, original_url, url_token, created_at, updated_at`
 	var updatedMapping domain.MappingInfo
 
-	err := s.dbpool.QueryRow(ctx, sql, newOriginalUrl, time.Now(), urlToken).Scan(&updatedMapping.Id, &updatedMapping.OriginalURL, &updatedMapping.Token, &updatedMapping.CreatedAt, &updatedMapping.UpdatedAt)
+	err := s.queryExecutor.QueryRow(ctx, sql, newOriginalUrl, time.Now(), urlToken).Scan(&updatedMapping.Id, &updatedMapping.OriginalURL, &updatedMapping.Token, &updatedMapping.CreatedAt, &updatedMapping.UpdatedAt)
 	if err == pgx.ErrNoRows {
 		return domain.MappingInfo{}, &domain.TokenNonExistingError{Msg: fmt.Sprintf("No mapping with token %s found", urlToken)}
 	} else if err != nil {
@@ -111,7 +110,7 @@ func (s *PostgresStorage) UpdateOriginalUrl(ctx context.Context, urlToken string
 func (s *PostgresStorage) DeleteMappingInfo(ctx context.Context, urlToken string) error {
 	sql := `DELETE FROM mappings WHERE url_token = $1`
 
-	cmdTag, err := s.dbpool.Exec(ctx, sql, urlToken)
+	cmdTag, err := s.queryExecutor.Exec(ctx, sql, urlToken)
 	if err != nil {
 		return fmt.Errorf("failed to delete mapping from db: %w", err)
 	} else if cmdTag.RowsAffected() == 0 {

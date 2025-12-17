@@ -4,12 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"log/slog"
+	"net"
 	"testing"
 	"time"
 	"url-shortening-service/internal/domain"
 	"url-shortening-service/internal/domain/mocks"
+	"url-shortening-service/internal/infrastructure/location"
 
 	"github.com/golang/mock/gomock"
+	"github.com/oschwald/geoip2-golang"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -184,7 +189,6 @@ func TestConvertEvent(t *testing.T) {
 		expected domain.ProcessedStatsEvent
 
 		statsStorageFn func(t *testing.T, ctrl *gomock.Controller) domain.StatsEventAdder
-		loggerFn       func(t *testing.T, ctrl *gomock.Controller) domain.Logger
 	}
 
 	testCases := []testCase{
@@ -206,11 +210,6 @@ func TestConvertEvent(t *testing.T) {
 			statsStorageFn: func(t *testing.T, ctrl *gomock.Controller) domain.StatsEventAdder {
 				return mocks.NewMockStatsEventAdder(ctrl)
 			},
-			loggerFn: func(t *testing.T, ctrl *gomock.Controller) domain.Logger {
-				mock := mocks.NewMockLogger(ctrl)
-				mock.EXPECT().Warn(gomock.Any()).AnyTimes()
-				return mock
-			},
 		},
 		{
 			name: "event with mobile user agent",
@@ -229,11 +228,6 @@ func TestConvertEvent(t *testing.T) {
 			},
 			statsStorageFn: func(t *testing.T, ctrl *gomock.Controller) domain.StatsEventAdder {
 				return mocks.NewMockStatsEventAdder(ctrl)
-			},
-			loggerFn: func(t *testing.T, ctrl *gomock.Controller) domain.Logger {
-				mock := mocks.NewMockLogger(ctrl)
-				mock.EXPECT().Warn(gomock.Any()).AnyTimes()
-				return mock
 			},
 		},
 		{
@@ -254,11 +248,6 @@ func TestConvertEvent(t *testing.T) {
 			statsStorageFn: func(t *testing.T, ctrl *gomock.Controller) domain.StatsEventAdder {
 				return mocks.NewMockStatsEventAdder(ctrl)
 			},
-			loggerFn: func(t *testing.T, ctrl *gomock.Controller) domain.Logger {
-				mock := mocks.NewMockLogger(ctrl)
-				mock.EXPECT().Warn(gomock.Any()).AnyTimes()
-				return mock
-			},
 		},
 		{
 			name: "event with bot user agent",
@@ -277,11 +266,6 @@ func TestConvertEvent(t *testing.T) {
 			},
 			statsStorageFn: func(t *testing.T, ctrl *gomock.Controller) domain.StatsEventAdder {
 				return mocks.NewMockStatsEventAdder(ctrl)
-			},
-			loggerFn: func(t *testing.T, ctrl *gomock.Controller) domain.Logger {
-				mock := mocks.NewMockLogger(ctrl)
-				mock.EXPECT().Warn(gomock.Any()).AnyTimes()
-				return mock
 			},
 		},
 		{
@@ -302,11 +286,6 @@ func TestConvertEvent(t *testing.T) {
 			statsStorageFn: func(t *testing.T, ctrl *gomock.Controller) domain.StatsEventAdder {
 				return mocks.NewMockStatsEventAdder(ctrl)
 			},
-			loggerFn: func(t *testing.T, ctrl *gomock.Controller) domain.Logger {
-				mock := mocks.NewMockLogger(ctrl)
-				mock.EXPECT().Warn(gomock.Any()).AnyTimes()
-				return mock
-			},
 		},
 	}
 
@@ -317,9 +296,16 @@ func TestConvertEvent(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			statsStorage := tt.statsStorageFn(t, ctrl)
-			logger := tt.loggerFn(t, ctrl)
+			logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-			processor := NewRedirectStatsProcessor(statsStorage, logger)
+			geoIpMock := mocks.NewGeoIpMock(func(ip net.IP) (*geoip2.City, error) {
+				return &geoip2.City{}, nil
+			}, func() error {
+				return nil
+			})
+			ipLocator := location.NewGeoIpLocator(geoIpMock)
+
+			processor := NewRedirectStatsProcessor(statsStorage, ipLocator, logger)
 			res := processor.convertEvent(tt.input)
 
 			assert.Equal(t, tt.expected.UrlToken, res.UrlToken)
@@ -480,10 +466,16 @@ func TestProcessEvent(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			statsStorage := tt.statsStorageFn(t, ctrl)
-			logger := mocks.NewMockLogger(ctrl)
-			logger.EXPECT().Warn(gomock.Any()).AnyTimes()
+			logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-			processor := NewRedirectStatsProcessor(statsStorage, logger)
+			geoIpMock := mocks.NewGeoIpMock(func(ip net.IP) (*geoip2.City, error) {
+				return &geoip2.City{}, nil
+			}, func() error {
+				return nil
+			})
+			ipLocator := location.NewGeoIpLocator(geoIpMock)
+
+			processor := NewRedirectStatsProcessor(statsStorage, ipLocator, logger)
 			err := processor.ProcessEvent(context.Background(), tt.input)
 
 			if tt.expectingError {

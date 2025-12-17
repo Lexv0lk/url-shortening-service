@@ -14,6 +14,7 @@ import (
 	"url-shortening-service/internal/infrastructure/database"
 	"url-shortening-service/internal/infrastructure/http"
 	"url-shortening-service/internal/infrastructure/kafka/statsbus"
+	"url-shortening-service/internal/infrastructure/location"
 	rediswrap "url-shortening-service/internal/infrastructure/redis"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -98,7 +99,7 @@ func main() {
 	defer dbpool.Close()
 
 	storage := database.NewPostgresStorage(dbpool, logger)
-	statsStorage := database.NewPostgresStatsStorage(dbpool, logger)
+	statsStorage := database.NewPostgresStatsStorage(dbpool)
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: redisUrl + ":" + redisPort,
@@ -112,12 +113,21 @@ func main() {
 		return
 	}
 
+	geo2ipDb, err := location.OpenGeoIPDatabase(domain.LocationDbPath)
+	if err != nil {
+		logger.Error("Failed to open GeoIP database: " + err.Error())
+		return
+	}
+	defer geo2ipDb.Close()
+
+	ipLocator := location.NewGeoIpLocator(geo2ipDb)
+
 	getUrlCase := urlcases.NewUrlGetter(localCache, storage, logger)
 	shortenUrlCase := urlcases.NewUrlShortener(idGenerator, storage)
 	updateUrlCase := urlcases.NewUrlUpdater(localCache, storage, logger)
 	deleteUrlCase := urlcases.NewUrlDeleter(localCache, storage, logger)
-	statsProcessor := stats.NewRedirectStatsProcessor(statsStorage, logger)
-	statsCalculator := database.NewPostgresStatsCalculator(dbpool, logger)
+	statsProcessor := stats.NewRedirectStatsProcessor(statsStorage, ipLocator, logger)
+	statsCalculator := database.NewPostgresStatsCalculator(dbpool)
 
 	topicId := "url_stats_events"
 	groupId := "url_stats_group"

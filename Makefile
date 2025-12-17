@@ -1,4 +1,4 @@
-﻿COVERAGE_FILE ?= coverage.out
+COVERAGE_FILE ?= coverage.out
 
 .PHONY: build-app-up
 build-app-up:
