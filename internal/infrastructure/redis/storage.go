@@ -11,7 +11,7 @@ import (
 // RedisStorage implements URL mapping cache operations using Redis.
 // It provides fast read access to URL mappings with optional TTL support.
 type RedisStorage struct {
-	client *redis.Client
+	client domain.KeyStorage
 	logger domain.Logger
 }
 
@@ -19,7 +19,7 @@ type RedisStorage struct {
 // Parameters:
 //   - client: Redis client connection
 //   - logger: logger for recording errors
-func NewRedisStorage(client *redis.Client, logger domain.Logger) *RedisStorage {
+func NewRedisStorage(client domain.KeyStorage, logger domain.Logger) *RedisStorage {
 	return &RedisStorage{
 		client: client,
 		logger: logger,

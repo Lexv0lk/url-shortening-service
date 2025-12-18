@@ -1,7 +1,12 @@
 //go:generate mockgen -source=storage.go -destination=./mocks/storage.go -package=mocks
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+)
 
 // MappedGetSetter combines URL retrieval and mapping creation capabilities.
 // Used for cache implementations that need both read and write access.
@@ -81,4 +86,32 @@ type IdGenerator interface {
 	// GetNextId generates and returns the next unique ID for URL mappings.
 	// Returns the new ID and an error if generation fails.
 	GetNextId(ctx context.Context) (int64, error)
+}
+
+// KeyStorage defines the interface for basic key-value operations in Redis.
+type KeyStorage interface {
+	KeySetter
+	KeyGetter
+	KeyDeleter
+}
+
+// KeySetIncrementer defines the interface for setting and incrementing keys in Redis.
+type KeySetIncrementer interface {
+	KeySetter
+	Incr(ctx context.Context, key string) *redis.IntCmd
+}
+
+// KeyGetter defines the interface for getting keys from Redis.
+type KeyGetter interface {
+	Get(ctx context.Context, key string) *redis.StringCmd
+}
+
+// KeyDeleter defines the interface for deleting keys from Redis.
+type KeyDeleter interface {
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
+}
+
+// KeySetter defines the interface for setting keys in Redis.
+type KeySetter interface {
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 }

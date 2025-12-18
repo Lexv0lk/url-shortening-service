@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"url-shortening-service/internal/domain"
-
-	"github.com/redis/go-redis/v9"
 )
 
 const counterId = "mapping_count"
@@ -13,7 +11,7 @@ const counterId = "mapping_count"
 // RedisIdGenerator generates unique IDs for URL mappings using Redis INCR.
 // It maintains an atomic counter in Redis to ensure uniqueness across instances.
 type RedisIdGenerator struct {
-	client *redis.Client
+	client domain.KeySetIncrementer
 }
 
 // NewRedisIdGenerator creates a new RedisIdGenerator instance.
@@ -26,7 +24,7 @@ type RedisIdGenerator struct {
 // Returns an error if:
 //   - Retrieving the last ID from storage fails
 //   - Setting the initial counter value in Redis fails
-func NewRedisIdGenerator(ctx context.Context, client *redis.Client, lastIdGetter domain.MappingInfoLastIdGetter) (*RedisIdGenerator, error) {
+func NewRedisIdGenerator(ctx context.Context, client domain.KeySetIncrementer, lastIdGetter domain.MappingInfoLastIdGetter) (*RedisIdGenerator, error) {
 	lastId, err := lastIdGetter.GetLastId(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("getting last mapping id: %w", err)

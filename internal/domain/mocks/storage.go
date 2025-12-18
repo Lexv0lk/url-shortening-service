@@ -7,9 +7,11 @@ package mocks
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 	domain "url-shortening-service/internal/domain"
 
 	gomock "github.com/golang/mock/gomock"
+	redis "github.com/redis/go-redis/v9"
 )
 
 // MockMappedGetSetter is a mock of MappedGetSetter interface.
@@ -454,4 +456,241 @@ func (m *MockIdGenerator) GetNextId(ctx context.Context) (int64, error) {
 func (mr *MockIdGeneratorMockRecorder) GetNextId(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNextId", reflect.TypeOf((*MockIdGenerator)(nil).GetNextId), ctx)
+}
+
+// MockKeyStorage is a mock of KeyStorage interface.
+type MockKeyStorage struct {
+	ctrl     *gomock.Controller
+	recorder *MockKeyStorageMockRecorder
+}
+
+// MockKeyStorageMockRecorder is the mock recorder for MockKeyStorage.
+type MockKeyStorageMockRecorder struct {
+	mock *MockKeyStorage
+}
+
+// NewMockKeyStorage creates a new mock instance.
+func NewMockKeyStorage(ctrl *gomock.Controller) *MockKeyStorage {
+	mock := &MockKeyStorage{ctrl: ctrl}
+	mock.recorder = &MockKeyStorageMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKeyStorage) EXPECT() *MockKeyStorageMockRecorder {
+	return m.recorder
+}
+
+// Del mocks base method.
+func (m *MockKeyStorage) Del(ctx context.Context, keys ...string) *redis.IntCmd {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Del", varargs...)
+	ret0, _ := ret[0].(*redis.IntCmd)
+	return ret0
+}
+
+// Del indicates an expected call of Del.
+func (mr *MockKeyStorageMockRecorder) Del(ctx interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Del", reflect.TypeOf((*MockKeyStorage)(nil).Del), varargs...)
+}
+
+// Get mocks base method.
+func (m *MockKeyStorage) Get(ctx context.Context, key string) *redis.StringCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", ctx, key)
+	ret0, _ := ret[0].(*redis.StringCmd)
+	return ret0
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockKeyStorageMockRecorder) Get(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockKeyStorage)(nil).Get), ctx, key)
+}
+
+// Set mocks base method.
+func (m *MockKeyStorage) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Set", ctx, key, value, expiration)
+	ret0, _ := ret[0].(*redis.StatusCmd)
+	return ret0
+}
+
+// Set indicates an expected call of Set.
+func (mr *MockKeyStorageMockRecorder) Set(ctx, key, value, expiration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockKeyStorage)(nil).Set), ctx, key, value, expiration)
+}
+
+// MockKeySetIncrementer is a mock of KeySetIncrementer interface.
+type MockKeySetIncrementer struct {
+	ctrl     *gomock.Controller
+	recorder *MockKeySetIncrementerMockRecorder
+}
+
+// MockKeySetIncrementerMockRecorder is the mock recorder for MockKeySetIncrementer.
+type MockKeySetIncrementerMockRecorder struct {
+	mock *MockKeySetIncrementer
+}
+
+// NewMockKeySetIncrementer creates a new mock instance.
+func NewMockKeySetIncrementer(ctrl *gomock.Controller) *MockKeySetIncrementer {
+	mock := &MockKeySetIncrementer{ctrl: ctrl}
+	mock.recorder = &MockKeySetIncrementerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKeySetIncrementer) EXPECT() *MockKeySetIncrementerMockRecorder {
+	return m.recorder
+}
+
+// Incr mocks base method.
+func (m *MockKeySetIncrementer) Incr(ctx context.Context, key string) *redis.IntCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Incr", ctx, key)
+	ret0, _ := ret[0].(*redis.IntCmd)
+	return ret0
+}
+
+// Incr indicates an expected call of Incr.
+func (mr *MockKeySetIncrementerMockRecorder) Incr(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Incr", reflect.TypeOf((*MockKeySetIncrementer)(nil).Incr), ctx, key)
+}
+
+// Set mocks base method.
+func (m *MockKeySetIncrementer) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Set", ctx, key, value, expiration)
+	ret0, _ := ret[0].(*redis.StatusCmd)
+	return ret0
+}
+
+// Set indicates an expected call of Set.
+func (mr *MockKeySetIncrementerMockRecorder) Set(ctx, key, value, expiration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockKeySetIncrementer)(nil).Set), ctx, key, value, expiration)
+}
+
+// MockKeyGetter is a mock of KeyGetter interface.
+type MockKeyGetter struct {
+	ctrl     *gomock.Controller
+	recorder *MockKeyGetterMockRecorder
+}
+
+// MockKeyGetterMockRecorder is the mock recorder for MockKeyGetter.
+type MockKeyGetterMockRecorder struct {
+	mock *MockKeyGetter
+}
+
+// NewMockKeyGetter creates a new mock instance.
+func NewMockKeyGetter(ctrl *gomock.Controller) *MockKeyGetter {
+	mock := &MockKeyGetter{ctrl: ctrl}
+	mock.recorder = &MockKeyGetterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKeyGetter) EXPECT() *MockKeyGetterMockRecorder {
+	return m.recorder
+}
+
+// Get mocks base method.
+func (m *MockKeyGetter) Get(ctx context.Context, key string) *redis.StringCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", ctx, key)
+	ret0, _ := ret[0].(*redis.StringCmd)
+	return ret0
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockKeyGetterMockRecorder) Get(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockKeyGetter)(nil).Get), ctx, key)
+}
+
+// MockKeyDeleter is a mock of KeyDeleter interface.
+type MockKeyDeleter struct {
+	ctrl     *gomock.Controller
+	recorder *MockKeyDeleterMockRecorder
+}
+
+// MockKeyDeleterMockRecorder is the mock recorder for MockKeyDeleter.
+type MockKeyDeleterMockRecorder struct {
+	mock *MockKeyDeleter
+}
+
+// NewMockKeyDeleter creates a new mock instance.
+func NewMockKeyDeleter(ctrl *gomock.Controller) *MockKeyDeleter {
+	mock := &MockKeyDeleter{ctrl: ctrl}
+	mock.recorder = &MockKeyDeleterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKeyDeleter) EXPECT() *MockKeyDeleterMockRecorder {
+	return m.recorder
+}
+
+// Del mocks base method.
+func (m *MockKeyDeleter) Del(ctx context.Context, keys ...string) *redis.IntCmd {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Del", varargs...)
+	ret0, _ := ret[0].(*redis.IntCmd)
+	return ret0
+}
+
+// Del indicates an expected call of Del.
+func (mr *MockKeyDeleterMockRecorder) Del(ctx interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Del", reflect.TypeOf((*MockKeyDeleter)(nil).Del), varargs...)
+}
+
+// MockKeySetter is a mock of KeySetter interface.
+type MockKeySetter struct {
+	ctrl     *gomock.Controller
+	recorder *MockKeySetterMockRecorder
+}
+
+// MockKeySetterMockRecorder is the mock recorder for MockKeySetter.
+type MockKeySetterMockRecorder struct {
+	mock *MockKeySetter
+}
+
+// NewMockKeySetter creates a new mock instance.
+func NewMockKeySetter(ctrl *gomock.Controller) *MockKeySetter {
+	mock := &MockKeySetter{ctrl: ctrl}
+	mock.recorder = &MockKeySetterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockKeySetter) EXPECT() *MockKeySetterMockRecorder {
+	return m.recorder
+}
+
+// Set mocks base method.
+func (m *MockKeySetter) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Set", ctx, key, value, expiration)
+	ret0, _ := ret[0].(*redis.StatusCmd)
+	return ret0
+}
+
+// Set indicates an expected call of Set.
+func (mr *MockKeySetterMockRecorder) Set(ctx, key, value, expiration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockKeySetter)(nil).Set), ctx, key, value, expiration)
 }
