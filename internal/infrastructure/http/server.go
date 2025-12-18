@@ -3,7 +3,6 @@ package http
 import (
 	"net/http"
 	"sync"
-	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 	"url-shortening-service/internal/infrastructure/http/handlers"
 )
@@ -12,10 +11,10 @@ import (
 // It registers handlers for URL creation, retrieval, update, deletion, and statistics.
 type HandlersServer struct {
 	mux             *http.ServeMux
-	urlAdder        urlcases.UrlShortener
-	urlGetter       urlcases.UrlGetter
-	urlUpdater      urlcases.UrlUpdater
-	urlDeleter      urlcases.UrlDeleter
+	urlAdder        domain.UrlShortener
+	urlGetter       domain.UrlGetter
+	urlUpdater      domain.UrlUpdater
+	urlDeleter      domain.UrlDeleter
 	statsSender     domain.StatisticsSender
 	statsCalculator domain.StatisticsCalculator
 	logger          domain.Logger
@@ -26,10 +25,10 @@ type HandlersServer struct {
 
 // NewSimpleServer creates a new HandlersServer instance with all required dependencies.
 func NewSimpleServer(
-	urlAdder urlcases.UrlShortener,
-	urlGetter urlcases.UrlGetter,
-	urlUpdater urlcases.UrlUpdater,
-	urlDeleter urlcases.UrlDeleter,
+	urlAdder domain.UrlShortener,
+	urlGetter domain.UrlGetter,
+	urlUpdater domain.UrlUpdater,
+	urlDeleter domain.UrlDeleter,
 	statsSender domain.StatisticsSender,
 	statsCalculator domain.StatisticsCalculator,
 	logger domain.Logger,

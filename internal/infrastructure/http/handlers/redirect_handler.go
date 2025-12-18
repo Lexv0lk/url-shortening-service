@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 )
 
@@ -15,7 +14,7 @@ import (
 // It retrieves the original URL and redirects the client, while also
 // sending statistics events for analytics.
 type RedirectHandler struct {
-	urlGetter   urlcases.UrlGetter
+	urlGetter   domain.UrlGetter
 	statsSender domain.StatisticsSender
 	logger      domain.Logger
 }
@@ -29,7 +28,7 @@ type RedirectRequest struct {
 //   - urlGetter: service for retrieving original URLs
 //   - statsSender: sender for statistics events
 //   - logger: logger for recording warnings and errors
-func NewRedirectHandler(urlGetter urlcases.UrlGetter, statsSender domain.StatisticsSender, logger domain.Logger) *RedirectHandler {
+func NewRedirectHandler(urlGetter domain.UrlGetter, statsSender domain.StatisticsSender, logger domain.Logger) *RedirectHandler {
 	return &RedirectHandler{
 		urlGetter:   urlGetter,
 		logger:      logger,

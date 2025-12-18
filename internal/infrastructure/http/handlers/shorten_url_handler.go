@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 )
 
 // ShortenUrlHandler handles HTTP requests for creating shortened URLs.
 type ShortenUrlHandler struct {
-	urlShortener urlcases.UrlShortener
+	urlShortener domain.UrlShortener
 	logger       domain.Logger
 }
 
@@ -23,7 +22,7 @@ type ShortenUrlRequest struct {
 // Parameters:
 //   - urlShortener: service for creating shortened URLs
 //   - logger: logger for recording errors
-func NewAddUrlHandler(urlShortener urlcases.UrlShortener, logger domain.Logger) *ShortenUrlHandler {
+func NewAddUrlHandler(urlShortener domain.UrlShortener, logger domain.Logger) *ShortenUrlHandler {
 	return &ShortenUrlHandler{
 		urlShortener: urlShortener,
 		logger:       logger,

@@ -3,13 +3,12 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 )
 
 // DeleteUrlHandler handles HTTP requests for deleting URL mappings.
 type DeleteUrlHandler struct {
-	urlDeleter urlcases.UrlDeleter
+	urlDeleter domain.UrlDeleter
 	logger     domain.Logger
 }
 
@@ -17,7 +16,7 @@ type DeleteUrlHandler struct {
 // Parameters:
 //   - urlDeleter: service for deleting URL mappings
 //   - logger: logger for recording errors
-func NewDeleteUrlHandler(urlDeleter urlcases.UrlDeleter, logger domain.Logger) *DeleteUrlHandler {
+func NewDeleteUrlHandler(urlDeleter domain.UrlDeleter, logger domain.Logger) *DeleteUrlHandler {
 	return &DeleteUrlHandler{
 		urlDeleter: urlDeleter,
 		logger:     logger,

@@ -136,7 +136,7 @@ func main() {
 
 	go eventConsumer.StartConsuming(context.Background())
 
-	server := http.NewSimpleServer(*shortenUrlCase, *getUrlCase, *updateUrlCase, *deleteUrlCase, eventProducer, statsCalculator, logger, serverPort)
+	server := http.NewSimpleServer(shortenUrlCase, getUrlCase, updateUrlCase, deleteUrlCase, eventProducer, statsCalculator, logger, serverPort)
 	logger.Info("Starting server")
 	server.Start()
 	logger.Info("Server closed")

@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"url-shortening-service/internal/application/urlcases"
 	"url-shortening-service/internal/domain"
 )
 
 // UpdaterUrlHandler handles HTTP requests for updating URL mappings.
 type UpdaterUrlHandler struct {
-	urlUpdater urlcases.UrlUpdater
+	urlUpdater domain.UrlUpdater
 	logger     domain.Logger
 }
 
@@ -23,7 +22,7 @@ type UpdateUrlRequest struct {
 // Parameters:
 //   - urlUpdater: service for updating URL mappings
 //   - logger: logger for recording errors
-func NewUpdateUrlHandler(urlUpdater urlcases.UrlUpdater, logger domain.Logger) *UpdaterUrlHandler {
+func NewUpdateUrlHandler(urlUpdater domain.UrlUpdater, logger domain.Logger) *UpdaterUrlHandler {
 	return &UpdaterUrlHandler{
 		urlUpdater: urlUpdater,
 		logger:     logger,

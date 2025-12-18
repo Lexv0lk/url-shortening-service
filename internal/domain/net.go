@@ -1,9 +1,27 @@
+//go:generate mockgen -source=net.go -destination=mocks/net.go -package=mocks
 package domain
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 )
+
+type UrlDeleter interface {
+	DeleteUrl(ctx context.Context, urlToken string) error
+}
+
+type UrlGetter interface {
+	GetOriginalUrl(ctx context.Context, urlToken string) (string, error)
+}
+
+type UrlShortener interface {
+	ShortenUrl(ctx context.Context, originalUrl string) (MappingInfo, error)
+}
+
+type UrlUpdater interface {
+	UpdateUrlMapping(ctx context.Context, urlToken string, newOriginalUrl string) (MappingInfo, error)
+}
 
 const (
 	ShortenUrlAddress = "POST /shorten"
