@@ -4,6 +4,8 @@ package domain
 import (
 	"context"
 	"time"
+
+	"github.com/segmentio/kafka-go"
 )
 
 // RawStatsEvent represents an unprocessed statistics event captured during URL redirection.
@@ -69,4 +71,16 @@ type StatisticsSender interface {
 	// SendEvent publishes a raw statistics event for asynchronous processing.
 	// Returns an error if the event could not be sent.
 	SendEvent(ctx context.Context, rawEvent RawStatsEvent) error
+}
+
+// MessageFetcher defines the interface for fetching and committing messages from a message bus.
+type MessageFetcher interface {
+	FetchMessage(ctx context.Context) (kafka.Message, error)
+	CommitMessages(ctx context.Context, msgs ...kafka.Message) error
+	Close() error
+}
+
+// MessageWriter defines the interface for writing messages to a message bus.
+type MessageWriter interface {
+	WriteMessages(ctx context.Context, msgs ...kafka.Message) error
 }

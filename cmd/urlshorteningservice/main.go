@@ -20,6 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 	"github.com/redis/go-redis/v9"
+	"github.com/segmentio/kafka-go"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -131,8 +132,20 @@ func main() {
 
 	topicId := "url_stats_events"
 	groupId := "url_stats_group"
-	eventProducer := statsbus.NewKafkaEventProducer(topicId, 10*time.Millisecond, kafkaUrl)
-	eventConsumer := statsbus.NewKafkaEventConsumer(topicId, groupId, statsProcessor, logger, kafkaUrl)
+	kafkaWriter := &kafka.Writer{
+		Addr:         kafka.TCP(kafkaUrl),
+		Topic:        topicId,
+		Balancer:     &kafka.LeastBytes{},
+		BatchTimeout: 10 * time.Millisecond,
+		Async:        true,
+	}
+	kafkaReader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{kafkaUrl},
+		Topic:   topicId,
+		GroupID: groupId,
+	})
+	eventProducer := statsbus.NewKafkaEventProducer(kafkaWriter)
+	eventConsumer := statsbus.NewStatsEventConsumer(kafkaReader, statsProcessor, logger)
 
 	go eventConsumer.StartConsuming(context.Background())
 

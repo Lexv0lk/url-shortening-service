@@ -7,18 +7,22 @@ import (
 	"net/url"
 )
 
+// UrlDeleter defines the interface for deleting URL mappings.
 type UrlDeleter interface {
 	DeleteUrl(ctx context.Context, urlToken string) error
 }
 
+// UrlGetter defines the interface for retrieving original URLs from shortened tokens.
 type UrlGetter interface {
 	GetOriginalUrl(ctx context.Context, urlToken string) (string, error)
 }
 
+// UrlShortener defines the interface for shortening URLs.
 type UrlShortener interface {
 	ShortenUrl(ctx context.Context, originalUrl string) (MappingInfo, error)
 }
 
+// UrlUpdater defines the interface for updating existing URL mappings.
 type UrlUpdater interface {
 	UpdateUrlMapping(ctx context.Context, urlToken string, newOriginalUrl string) (MappingInfo, error)
 }

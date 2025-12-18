@@ -10,6 +10,7 @@ import (
 	domain "url-shortening-service/internal/domain"
 
 	gomock "github.com/golang/mock/gomock"
+	kafka "github.com/segmentio/kafka-go"
 )
 
 // MockStatisticsProcessor is a mock of StatisticsProcessor interface.
@@ -159,4 +160,117 @@ func (m *MockStatisticsSender) SendEvent(ctx context.Context, rawEvent domain.Ra
 func (mr *MockStatisticsSenderMockRecorder) SendEvent(ctx, rawEvent interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendEvent", reflect.TypeOf((*MockStatisticsSender)(nil).SendEvent), ctx, rawEvent)
+}
+
+// MockMessageFetcher is a mock of MessageFetcher interface.
+type MockMessageFetcher struct {
+	ctrl     *gomock.Controller
+	recorder *MockMessageFetcherMockRecorder
+}
+
+// MockMessageFetcherMockRecorder is the mock recorder for MockMessageFetcher.
+type MockMessageFetcherMockRecorder struct {
+	mock *MockMessageFetcher
+}
+
+// NewMockMessageFetcher creates a new mock instance.
+func NewMockMessageFetcher(ctrl *gomock.Controller) *MockMessageFetcher {
+	mock := &MockMessageFetcher{ctrl: ctrl}
+	mock.recorder = &MockMessageFetcherMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMessageFetcher) EXPECT() *MockMessageFetcherMockRecorder {
+	return m.recorder
+}
+
+// Close mocks base method.
+func (m *MockMessageFetcher) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockMessageFetcherMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockMessageFetcher)(nil).Close))
+}
+
+// CommitMessages mocks base method.
+func (m *MockMessageFetcher) CommitMessages(ctx context.Context, msgs ...kafka.Message) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range msgs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CommitMessages", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CommitMessages indicates an expected call of CommitMessages.
+func (mr *MockMessageFetcherMockRecorder) CommitMessages(ctx interface{}, msgs ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, msgs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitMessages", reflect.TypeOf((*MockMessageFetcher)(nil).CommitMessages), varargs...)
+}
+
+// FetchMessage mocks base method.
+func (m *MockMessageFetcher) FetchMessage(ctx context.Context) (kafka.Message, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchMessage", ctx)
+	ret0, _ := ret[0].(kafka.Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchMessage indicates an expected call of FetchMessage.
+func (mr *MockMessageFetcherMockRecorder) FetchMessage(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchMessage", reflect.TypeOf((*MockMessageFetcher)(nil).FetchMessage), ctx)
+}
+
+// MockMessageWriter is a mock of MessageWriter interface.
+type MockMessageWriter struct {
+	ctrl     *gomock.Controller
+	recorder *MockMessageWriterMockRecorder
+}
+
+// MockMessageWriterMockRecorder is the mock recorder for MockMessageWriter.
+type MockMessageWriterMockRecorder struct {
+	mock *MockMessageWriter
+}
+
+// NewMockMessageWriter creates a new mock instance.
+func NewMockMessageWriter(ctrl *gomock.Controller) *MockMessageWriter {
+	mock := &MockMessageWriter{ctrl: ctrl}
+	mock.recorder = &MockMessageWriterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMessageWriter) EXPECT() *MockMessageWriterMockRecorder {
+	return m.recorder
+}
+
+// WriteMessages mocks base method.
+func (m *MockMessageWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range msgs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WriteMessages", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteMessages indicates an expected call of WriteMessages.
+func (mr *MockMessageWriterMockRecorder) WriteMessages(ctx interface{}, msgs ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, msgs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteMessages", reflect.TypeOf((*MockMessageWriter)(nil).WriteMessages), varargs...)
 }
