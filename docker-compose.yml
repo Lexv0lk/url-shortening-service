@@ -16,10 +16,20 @@ services:
       DB_PORT: 5432
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 9000
+      CLICKHOUSE_DB: url_shortener_analytics
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: default
     depends_on:
-      - redis
-      - postgres
-      - kafka
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     networks:
       - backend-net
     volumes:
@@ -48,6 +58,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d url_shortener_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   kafka:
     container_name: kafka
@@ -57,16 +73,52 @@ services:
       KAFKA_CFG_NODE_ID: 0
       KAFKA_CFG_PROCESS_ROLES: controller,broker
       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
     ports:
       - "9092:9092"
+      - "9094:9094"
     volumes:
       - kafka_data:/bitnami/kafka
     networks:
       - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  clickhouse:
+    container_name: clickhouse
+    image: "clickhouse/clickhouse-server:25.12-alpine"
+    profiles: ["app", "infra"]
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      CLICKHOUSE_DB: url_shortener_analytics
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: default
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
 
 networks:
   backend-net:
@@ -75,3 +127,5 @@ networks:
 volumes:
   postgres_data:
   kafka_data:
+  clickhouse_data:
+  clickhouse_logs:
