@@ -45,10 +45,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+
     - name: Validate docker-compose
-      run: docker-compose config
-      
+      run: docker-compose --profile app config --quiet
+
     - name: Build docker images
       run: docker-compose build
       
@@ -60,6 +60,7 @@ jobs:
       with:
         filename: docker-compose.yml
         timeout: 60
-      
+        workdir: ''
+
     - name: Stop services
       run: docker-compose down
