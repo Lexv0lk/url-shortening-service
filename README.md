@@ -6,7 +6,7 @@
 [![Kafka](https://img.shields.io/badge/Kafka-3.9.0-231F20?style=flat&logo=apache-kafka)](https://kafka.apache.org/)
 [![ClickHouse](https://img.shields.io/badge/ClickHouse-25.12-FFCC01?style=flat&logo=clickhouse)](https://clickhouse.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)](https://www.docker.com/)
-[![CI](https://img.shields.io/github/actions/workflow/status/yourusername/url-shortening-service/ci.yml?branch=main&label=CI&logo=github)](https://github.com/Lexv0lk/url-shortening-service/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/yourusername/url-shortening-service/ci.yml?branch=main&label=CI&logo=github)]
 [![Coverage](https://img.shields.io/badge/Coverage-80%25-brightgreen?style=flat)](/))
 
 A high-performance URL shortening service built with Go, featuring real-time analytics, geolocation tracking, and horizontal scalability.
