@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"net"
 	"net/http"
@@ -57,7 +56,7 @@ func (h *RedirectHandler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.statsSender.SendEvent(context.Background(), domain.RawStatsEvent{
+	err = h.statsSender.SendEvent(r.Context(), domain.RawStatsEvent{
 		UrlToken:  token,
 		Timestamp: time.Now(),
 		IP:        retrieveIP(r),

@@ -57,57 +57,27 @@ func main() {
 		SSlEnabled: false,
 	}
 
-	if envRedisUrl, found := os.LookupEnv(domain.RedisUrlEnv); found {
-		redisHost = envRedisUrl
-	}
-	if envRedisPort, found := os.LookupEnv(domain.RedisPortEnv); found {
-		redisPort = envRedisPort
-	}
-	if envServerPort, found := os.LookupEnv(domain.ServerPortEnv); found {
-		serverPort = envServerPort
-	}
-	if endDatabaseUser, found := os.LookupEnv(domain.DatabaseUserEnv); found {
-		databaseSettings.User = endDatabaseUser
-	}
-	if endDatabasePassword, found := os.LookupEnv(domain.DatabasePasswordEnv); found {
-		databaseSettings.Password = endDatabasePassword
-	}
-	if endDatabaseHost, found := os.LookupEnv(domain.DatabaseHostEnv); found {
-		databaseSettings.Host = endDatabaseHost
-	}
-	if endDatabasePort, found := os.LookupEnv(domain.DatabasePortEnv); found {
-		databaseSettings.Port = endDatabasePort
-	}
-	if endDatabaseName, found := os.LookupEnv(domain.DatabaseNameEnv); found {
-		databaseSettings.DBName = endDatabaseName
-	}
+	trySetEnvVariable(domain.RedisUrlEnv, &redisHost)
+	trySetEnvVariable(domain.RedisPortEnv, &redisPort)
+	trySetEnvVariable(domain.ServerPortEnv, &serverPort)
+	trySetEnvVariable(domain.DatabaseUserEnv, &databaseSettings.User)
+	trySetEnvVariable(domain.DatabasePasswordEnv, &databaseSettings.Password)
+	trySetEnvVariable(domain.DatabaseHostEnv, &databaseSettings.Host)
+	trySetEnvVariable(domain.DatabasePortEnv, &databaseSettings.Port)
+	trySetEnvVariable(domain.DatabaseNameEnv, &databaseSettings.DBName)
+	trySetEnvVariable(domain.KafkaHostEnv, &kafkaHost)
+	trySetEnvVariable(domain.KafkaPortEnv, &kafkaPort)
+	trySetEnvVariable(domain.ClickhouseHostEnv, &clickhouseHost)
+	trySetEnvVariable(domain.ClickhousePortEnv, &clickhousePort)
+	trySetEnvVariable(domain.ClickhouseDBEnv, &clickhouseDB)
+	trySetEnvVariable(domain.ClickhouseUserEnv, &clickhouseUser)
+	trySetEnvVariable(domain.ClickhousePasswordEnv, &clickhousePassword)
 	if endDatabaseSsl, found := os.LookupEnv(domain.DatabaseSslEnv); found {
 		if strings.EqualFold("false", endDatabaseSsl) {
 			databaseSettings.SSlEnabled = false
 		} else {
 			databaseSettings.SSlEnabled = true
 		}
-	}
-	if envKafkaHost, found := os.LookupEnv(domain.KafkaHostEnv); found {
-		kafkaHost = envKafkaHost
-	}
-	if envKafkaPort, found := os.LookupEnv(domain.KafkaPortEnv); found {
-		kafkaPort = envKafkaPort
-	}
-	if envClickhouseHost, found := os.LookupEnv(domain.ClickhouseHostEnv); found {
-		clickhouseHost = envClickhouseHost
-	}
-	if envClickhousePort, found := os.LookupEnv(domain.ClickhousePortEnv); found {
-		clickhousePort = envClickhousePort
-	}
-	if envClickhouseDB, found := os.LookupEnv(domain.ClickhouseDBEnv); found {
-		clickhouseDB = envClickhouseDB
-	}
-	if envClickhouseUser, found := os.LookupEnv(domain.ClickhouseUserEnv); found {
-		clickhouseUser = envClickhouseUser
-	}
-	if envClickhousePassword, found := os.LookupEnv(domain.ClickhousePasswordEnv); found {
-		clickhousePassword = envClickhousePassword
 	}
 
 	clickhouseSettings := &clickhouse.Options{
@@ -139,6 +109,12 @@ func main() {
 		return
 	}
 
+	err = migrateDatabase(clickhouseDsn, &embedStatsMigrations, "clickhouse-migrations", "clickhouse", "clickhouse")
+	if err != nil {
+		logger.Error(fmt.Sprintf("Clickhouse migration failed: %v", err))
+		return
+	}
+
 	dbpool, err := pgxpool.New(context.Background(), databaseUrl)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Unable to connect to database: %v", err))
@@ -146,33 +122,17 @@ func main() {
 	}
 	defer dbpool.Close()
 
-	storage := database.NewPostgresStorage(dbpool, logger)
-
-	err = migrateDatabase(clickhouseDsn, &embedStatsMigrations, "clickhouse-migrations", "clickhouse", "clickhouse")
-	if err != nil {
-		logger.Error(fmt.Sprintf("Clickhouse migration failed: %v", err))
-		return
-	}
-
 	clickhouseConn, err := clickhouse.Open(clickhouseSettings)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Unable to connect to Clickhouse: %v", err))
 		return
 	}
-
-	statsStorage := database.NewClickhouseStatsStorage(clickhouseConn)
+	defer clickhouseConn.Close()
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: redisHost + ":" + redisPort,
 	})
 	defer redisClient.Close()
-
-	localCache := rediswrap.NewRedisStorage(redisClient, logger)
-	idGenerator, err := rediswrap.NewRedisIdGenerator(context.Background(), redisClient, storage)
-	if err != nil {
-		logger.Error("Failed to create Redis ID generator")
-		return
-	}
 
 	geo2ipDb, err := location.OpenGeoIPDatabase(domain.LocationDbPath)
 	if err != nil {
@@ -181,12 +141,23 @@ func main() {
 	}
 	defer geo2ipDb.Close()
 
+	storage := database.NewPostgresStorage(dbpool, logger)
+	statsStorage := database.NewClickhouseStatsStorage(clickhouseConn)
+	cache := rediswrap.NewRedisStorage(redisClient, logger)
+
+	idGenerator, err := rediswrap.NewRedisIdGenerator(context.Background(), redisClient, storage)
+	if err != nil {
+		logger.Error("Failed to create Redis ID generator")
+		return
+	}
+
 	ipLocator := location.NewGeoIpLocator(geo2ipDb)
 
-	getUrlCase := urlcases.NewUrlGetter(localCache, storage, logger)
+	getUrlCase := urlcases.NewUrlGetter(cache, storage, logger)
 	shortenUrlCase := urlcases.NewUrlShortener(idGenerator, storage)
-	updateUrlCase := urlcases.NewUrlUpdater(localCache, storage, logger)
-	deleteUrlCase := urlcases.NewUrlDeleter(localCache, storage, logger)
+	updateUrlCase := urlcases.NewUrlUpdater(cache, storage, logger)
+	deleteUrlCase := urlcases.NewUrlDeleter(cache, storage, logger)
+
 	statsProcessor := stats.NewRedirectStatsProcessor(statsStorage, ipLocator, logger)
 	statsCalculator := database.NewClickhouseStatsCalculator(clickhouseConn)
 
@@ -209,10 +180,18 @@ func main() {
 
 	go eventConsumer.StartConsuming(context.Background())
 
-	server := http.NewSimpleServer(shortenUrlCase, getUrlCase, updateUrlCase, deleteUrlCase, eventProducer, statsCalculator, logger, serverPort)
+	server := http.NewSimpleServer(shortenUrlCase, getUrlCase, updateUrlCase, deleteUrlCase,
+		eventProducer, statsCalculator, logger, serverPort)
+
 	logger.Info("Starting server")
 	server.Start()
 	logger.Info("Server closed")
+}
+
+func trySetEnvVariable(envName string, val *string) {
+	if envVal, found := os.LookupEnv(envName); found {
+		*val = envVal
+	}
 }
 
 func migrateDatabase(databaseUrl string, migrations *embed.FS, dir, driverName, dialect string) error {
