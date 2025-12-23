@@ -6,7 +6,8 @@
 [![Kafka](https://img.shields.io/badge/Kafka-3.9.0-231F20?style=flat&logo=apache-kafka)](https://kafka.apache.org/)
 [![ClickHouse](https://img.shields.io/badge/ClickHouse-25.12-FFCC01?style=flat&logo=clickhouse)](https://clickhouse.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)](https://www.docker.com/)
-[![Coverage](https://img.shields.io/badge/Coverage-80%25-brightgreen?style=flat)](/)
+[![CI](https://img.shields.io/github/actions/workflow/status/yourusername/url-shortening-service/ci.yml?branch=main&label=CI&logo=github)](https://github.com/yourusername/url-shortening-service/actions)
+[![Coverage](https://img.shields.io/badge/Coverage-80%25-brightgreen?style=flat)](/))
 
 A high-performance URL shortening service built with Go, featuring real-time analytics, geolocation tracking, and horizontal scalability.
 
@@ -20,6 +21,7 @@ A high-performance URL shortening service built with Go, featuring real-time ana
 - **Dual Storage** — PostgreSQL for URL mappings, ClickHouse for analytics
 - **Graceful Shutdown** — Proper cleanup of all connections and resources
 - **Database Migrations** — Automatic schema management with Goose
+- **CI/CD** — Automated testing and Docker validation with GitHub Actions
 
 ## 🏗️ Architecture
 
@@ -186,21 +188,39 @@ go test -race -count=1 -coverprofile=coverage.out ./...
 go tool cover -func=coverage.out
 ```
 
+## 🔄 Continuous Integration
+
+The project uses **GitHub Actions** for automated testing and validation:
+
+### CI Pipeline Stages
+
+1. **Test Stage**
+   - Runs all unit tests with race detection
+   - Generates test coverage report (80%+)
+   - Uploads coverage HTML as artifact
+
+2. **Docker Stage**
+   - Validates `docker-compose.yml` configuration
+   - Builds Docker images for all services
+   - Starts services with health checks
+   - Ensures all containers are healthy before deployment
+
+### Workflow Triggers
+- Push to `main` branch
+- Pull requests to `main` branch
+
 ## 📊 Load Testing Results
 
 ### Statistics Endpoint (PostgreSQL)
 
-<!-- TODO: Add screenshot -->
 ![PostgreSQL Stats Load Test](assets/load-test-postgres-stats.png)
 
 ### Statistics Endpoint (ClickHouse)
 
-<!-- TODO: Add screenshot -->
 ![ClickHouse Stats Load Test](assets/load-test-clickhouse-stats.png)
 
 ### Redirect Endpoint
 
-<!-- TODO: Add screenshot -->
 ![Redirect Load Test](assets/load-test-redirects.png)
 
 ## 📁 Project Structure
