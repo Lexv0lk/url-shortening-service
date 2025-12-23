@@ -6,7 +6,9 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 	"url-shortening-service/internal/application/stats"
 	"url-shortening-service/internal/application/urlcases"
@@ -34,6 +36,9 @@ var embedMigrations embed.FS
 var embedStatsMigrations embed.FS
 
 func main() {
+	mainCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	redisHost := "localhost"
 	redisPort := "6379"
 
@@ -115,7 +120,7 @@ func main() {
 		return
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), databaseUrl)
+	dbpool, err := pgxpool.New(mainCtx, databaseUrl)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Unable to connect to database: %v", err))
 		return
@@ -145,7 +150,7 @@ func main() {
 	statsStorage := database.NewClickhouseStatsStorage(clickhouseConn)
 	cache := rediswrap.NewRedisStorage(redisClient, logger)
 
-	idGenerator, err := rediswrap.NewRedisIdGenerator(context.Background(), redisClient, storage)
+	idGenerator, err := rediswrap.NewRedisIdGenerator(mainCtx, redisClient, storage)
 	if err != nil {
 		logger.Error("Failed to create Redis ID generator")
 		return
@@ -178,14 +183,23 @@ func main() {
 	eventProducer := statsbus.NewKafkaEventProducer(kafkaWriter)
 	eventConsumer := statsbus.NewStatsEventConsumer(kafkaReader, statsProcessor, logger)
 
-	go eventConsumer.StartConsuming(context.Background())
+	go eventConsumer.StartConsuming(mainCtx)
 
 	server := http.NewSimpleServer(shortenUrlCase, getUrlCase, updateUrlCase, deleteUrlCase,
 		eventProducer, statsCalculator, logger, serverPort)
 
 	logger.Info("Starting server")
-	server.Start()
-	logger.Info("Server closed")
+	go server.Start()
+
+	<-mainCtx.Done()
+
+	logger.Info("Shutting down server")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Server shutdown failed: " + err.Error())
+	}
 }
 
 func trySetEnvVariable(envName string, val *string) {

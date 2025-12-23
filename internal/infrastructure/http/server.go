@@ -1,6 +1,8 @@
 package http
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"sync"
 	"url-shortening-service/internal/domain"
@@ -10,7 +12,9 @@ import (
 // HandlersServer is the HTTP server that handles all URL shortening service endpoints.
 // It registers handlers for URL creation, retrieval, update, deletion, and statistics.
 type HandlersServer struct {
-	mux             *http.ServeMux
+	mux    *http.ServeMux
+	server *http.Server
+
 	urlAdder        domain.UrlShortener
 	urlGetter       domain.UrlGetter
 	urlUpdater      domain.UrlUpdater
@@ -48,14 +52,9 @@ func NewSimpleServer(
 	}
 }
 
-// Start starts the HTTP server. This method is safe to call multiple times;
-// the server will only be started once.
+// Start starts the HTTP server.
 // The server listens on the configured port and blocks until an error occurs.
 func (s *HandlersServer) Start() {
-	s.once.Do(s.startServer)
-}
-
-func (s *HandlersServer) startServer() {
 	mux := http.NewServeMux()
 	shortenUrlHandler := handlers.NewAddUrlHandler(s.urlAdder, s.logger)
 	redirectHandler := handlers.NewRedirectHandler(s.urlGetter, s.statsSender, s.logger)
@@ -69,7 +68,18 @@ func (s *HandlersServer) startServer() {
 	mux.HandleFunc(domain.DeleteUrlAddress, deleteUrlHandler.Delete)
 	mux.HandleFunc(domain.StatsUrlAddress, statsHandler.Show)
 
-	if err := http.ListenAndServe(":"+s.port, mux); err != nil {
+	s.server = &http.Server{
+		Addr:    ":" + s.port,
+		Handler: mux,
+	}
+
+	if err := s.server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		s.logger.Error("Failed to start HTTP server: " + err.Error())
 	}
+}
+
+// Shutdown gracefully shuts down the HTTP server.
+// It stops accepting new requests and waits for ongoing requests to complete.
+func (s *HandlersServer) Shutdown(ctx context.Context) error {
+	return s.server.Shutdown(ctx)
 }
