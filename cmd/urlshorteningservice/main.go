@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
-	"embed"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/signal"
 	"strings"
@@ -19,6 +19,9 @@ import (
 	"url-shortening-service/internal/infrastructure/location"
 	rediswrap "url-shortening-service/internal/infrastructure/redis"
 
+	clickhousemigrations "url-shortening-service/clickhouse-migrations"
+	postgresmigrations "url-shortening-service/migrations"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
@@ -28,12 +31,6 @@ import (
 	_ "github.com/ClickHouse/clickhouse-go/v2"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
-
-//go:embed migrations/*.sql
-var embedMigrations embed.FS
-
-//go:embed clickhouse-migrations/*.sql
-var embedStatsMigrations embed.FS
 
 func main() {
 	mainCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -108,13 +105,13 @@ func main() {
 	databaseUrl := databaseSettings.GetUrl()
 	kafkaUrl := kafkaHost + ":" + kafkaPort
 
-	err := migrateDatabase(databaseUrl, &embedMigrations, "migrations", "pgx", "postgres")
+	err := migrateDatabase(databaseUrl, &postgresmigrations.PostgresMigrations, ".", "pgx", "postgres")
 	if err != nil {
 		logger.Error(fmt.Sprintf("Database migration failed: %v", err))
 		return
 	}
 
-	err = migrateDatabase(clickhouseDsn, &embedStatsMigrations, "clickhouse-migrations", "clickhouse", "clickhouse")
+	err = migrateDatabase(clickhouseDsn, &clickhousemigrations.ClickhouseMigrations, ".", "clickhouse", "clickhouse")
 	if err != nil {
 		logger.Error(fmt.Sprintf("Clickhouse migration failed: %v", err))
 		return
@@ -208,7 +205,7 @@ func trySetEnvVariable(envName string, val *string) {
 	}
 }
 
-func migrateDatabase(databaseUrl string, migrations *embed.FS, dir, driverName, dialect string) error {
+func migrateDatabase(databaseUrl string, migrations fs.FS, dir, driverName, dialect string) error {
 	db, err := sql.Open(driverName, databaseUrl)
 	if err != nil {
 		return err
