@@ -99,20 +99,6 @@ curl http://localhost:8080/stats/b
 }
 ```
 
-## 🛠️ Tech Stack
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Language** | Go 1.25 | Core application |
-| **Web Server** | net/http | HTTP API |
-| **Primary Storage** | PostgreSQL 16 | URL mappings |
-| **Cache** | Redis | Fast lookups & ID generation |
-| **Message Queue** | Kafka 3.9 | Async event processing |
-| **Analytics DB** | ClickHouse | High-performance statistics |
-| **Migrations** | Goose | Schema management |
-| **Geolocation** | GeoLite2 | IP to location mapping |
-| **Containerization** | Docker Compose | Local development |
-
 ## 🚦 Getting Started
 
 ### Prerequisites
@@ -141,38 +127,6 @@ make build-app-up
 
 3. **The service is now running at `http://localhost:8080`**
 
-### Development Setup
-
-1. **Start infrastructure only:**
-```bash
-docker-compose --profile infra up -d
-# or
-make infra-up
-```
-
-2. **Run the application locally:**
-```bash
-go run cmd/urlshorteningservice/main.go
-```
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SERVER_PORT` | 8080 | HTTP server port |
-| `REDIS_URL` | localhost | Redis host |
-| `REDIS_PORT` | 6379 | Redis port |
-| `DB_HOST` | localhost | PostgreSQL host |
-| `DB_PORT` | 5432 | PostgreSQL port |
-| `DB_USER` | admin | PostgreSQL user |
-| `DB_PASSWORD` | password | PostgreSQL password |
-| `DB_NAME` | url_shortener_db | PostgreSQL database |
-| `KAFKA_HOST` | localhost | Kafka host |
-| `KAFKA_PORT` | 9094 | Kafka port |
-| `CLICKHOUSE_HOST` | localhost | ClickHouse host |
-| `CLICKHOUSE_PORT` | 9000 | ClickHouse port |
-| `CLICKHOUSE_DB` | url_shortener_analytics | ClickHouse database |
-
 ## 🧪 Testing
 
 The project has **80% test coverage** with unit tests for all business logic, handlers, and storage layers.
@@ -187,6 +141,32 @@ Or directly with Go:
 go test -race -count=1 -coverprofile=coverage.out ./...
 go tool cover -func=coverage.out
 ```
+
+## 📊 Load Testing Results
+
+### Statistics Endpoint — PostgreSQL vs ClickHouse
+
+ClickHouse is optimized for analytical queries (column-oriented storage, vectorized execution), which gives a significant throughput boost over PostgreSQL for aggregation-heavy stats queries.
+
+**PostgreSQL (baseline):**
+
+![PostgreSQL Stats Load Test](assets/postgres-res.png)
+
+**ClickHouse (analytics backend):**
+
+![ClickHouse Stats Load Test](assets/clickhouse-res.png)
+
+### Redirect Endpoint — without Redis vs with Redis
+
+Redis caching eliminates redundant PostgreSQL lookups for repeated short URL resolutions. Hot URLs are served directly from memory, drastically reducing latency and increasing RPS.
+
+**No Redis (direct PostgreSQL lookup every request):**
+
+![Redirect Load Test](assets/redis-off-res.png)
+
+**With Redis (cache-aside, hot paths served from memory):**
+
+![Redirect Load Test](assets/redis-on-res.png)
 
 ## 🔄 Continuous Integration
 
@@ -208,51 +188,6 @@ The project uses **GitHub Actions** for automated testing and validation:
 ### Workflow Triggers
 - Push to `main` branch
 - Pull requests to `main` branch
-
-## 📊 Load Testing Results
-
-### Statistics Endpoint (PostgreSQL)
-
-![PostgreSQL Stats Load Test](assets/load-test-postgres-stats.png)
-
-### Statistics Endpoint (ClickHouse)
-
-![ClickHouse Stats Load Test](assets/load-test-clickhouse-stats.png)
-
-### Redirect Endpoint
-
-![Redirect Load Test](assets/load-test-redirects.png)
-
-## 📁 Project Structure
-
-```
-├── cmd/
-│   └── urlshorteningservice/
-│       ├── main.go                 # Application entry point
-│       ├── migrations/             # Embedded PostgreSQL migrations
-│       └── clickhouse-migrations/  # Embedded ClickHouse migrations
-├── internal/
-│   ├── domain/                     # Domain models & interfaces
-│   │   ├── mapping.go              # URL mapping entity
-│   │   ├── statistics.go           # Statistics entities
-│   │   ├── storage.go              # Storage interfaces
-│   │   └── token_generator.go      # Base62 token generation
-│   ├── application/                # Use cases / business logic
-│   │   ├── urlcases/               # URL CRUD operations
-│   │   └── stats/                  # Statistics processing
-│   └── infrastructure/             # External dependencies
-│       ├── http/                   # HTTP server & handlers
-│       ├── database/               # PostgreSQL & ClickHouse
-│       ├── redis/                  # Cache & ID generation
-│       ├── kafka/                  # Event bus
-│       └── location/               # GeoIP lookup
-├── assets/
-│   └── GeoLite2-City.mmdb          # GeoLite2 database
-├── docker-compose.yml
-├── Dockerfile
-├── Makefile
-└── go.mod
-```
 
 ## 🔧 Make Commands
 
